@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Header from './components/Shop/Header';
@@ -6,7 +6,9 @@ import ProductCard from './components/Shop/ProductCard';
 import Cart from './components/Shop/Cart';
 import Hero from './components/Shop/Hero';
 import Footer from './components/Shop/Footer';
+import Dashboard from './components/Dashboard/Dashboard';
 import productsData from './data/products.json';
+import { initializeUsers, login, register, logout, getCurrentUser } from './utils/authService';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -14,26 +16,53 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
 
   // Referencias para scroll
   const productosRef = useRef(null);
   const ofertasRef = useRef(null);
   const contactoRef = useRef(null);
 
-  const handleLogin = (userData) => {
-    setUser(userData);
-    setShowAuthModal(false);
+  // Inicializar usuarios y verificar sesión
+ useEffect(() => {
+  const init = async () => {
+    initializeUsers();
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
+    }
   };
 
-  const handleRegister = (userData) => {
-    setUser(userData);
-    setShowAuthModal(false);
+  init();
+}, []);
+
+
+  const handleLogin = (email, password, setError) => {
+    const result = login(email, password);
+    if (result.success) {
+      setUser(result.user);
+      setShowAuthModal(false);
+    } else {
+      setError(result.message);
+    }
+  };
+
+  const handleRegister = (userData, setError) => {
+    const result = register(userData);
+    if (result.success) {
+      setUser(result.user);
+      setShowAuthModal(false);
+    } else {
+      setError(result.message);
+    }
   };
 
   const handleLogout = () => {
+    logout();
     setUser(null);
     setCartItems([]);
     setIsCartOpen(false);
+    setIsDashboardOpen(false);
   };
 
   const handleAddToCart = (product) => {
@@ -86,12 +115,10 @@ function App() {
     setAuthView('login');
   };
 
-  // Funciones de scroll
   const scrollToSection = (ref) => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Filtrar productos con ofertas
   const productosConOferta = productsData.filter(p => p.discount);
 
   return (
@@ -102,6 +129,7 @@ function App() {
         user={user}
         onLogout={handleLogout}
         onLoginClick={handleLoginClick}
+        onDashboardClick={() => setIsDashboardOpen(true)}
         onNavigate={{
           productos: () => scrollToSection(productosRef),
           ofertas: () => scrollToSection(ofertasRef),
@@ -179,6 +207,15 @@ function App() {
         onUpdateQuantity={handleUpdateQuantity}
         onRemove={handleRemove}
       />
+
+      {/* Dashboard */}
+      {user && (
+        <Dashboard
+          isOpen={isDashboardOpen}
+          onClose={() => setIsDashboardOpen(false)}
+          user={user}
+        />
+      )}
     </div>
   );
 }

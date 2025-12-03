@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Lock, Mail, User, ShoppingBag, X } from 'lucide-react';
+import { Lock, Mail, User, ShoppingBag, X, Phone, MapPin } from 'lucide-react';
 
 const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    phone: '',
+    address: ''
   });
   const [error, setError] = useState('');
 
@@ -22,7 +24,7 @@ const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
     setError('');
 
     if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-      setError('Por favor completa todos los campos');
+      setError('Por favor completa todos los campos obligatorios');
       return;
     }
 
@@ -36,7 +38,7 @@ const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
       return;
     }
 
-    onRegister({ email: formData.email, name: formData.name });
+    onRegister(formData, setError);
   };
 
   return (
@@ -44,7 +46,7 @@ const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg transition"
+          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg transition z-10"
         >
           <X size={24} className="text-gray-600" />
         </button>
@@ -67,7 +69,7 @@ const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Nombre Completo
+            Nombre Completo *
           </label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -84,7 +86,7 @@ const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Correo Electrónico
+            Correo Electrónico *
           </label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -101,7 +103,41 @@ const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Contraseña
+            Teléfono
+          </label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+              placeholder="+57 300 123 4567"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Dirección
+          </label>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+              placeholder="Calle 123 #45-67"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Contraseña *
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -118,7 +154,7 @@ const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Confirmar Contraseña
+            Confirmar Contraseña *
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />

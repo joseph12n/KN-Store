@@ -1,6 +1,6 @@
-import { ShoppingCart, LogOut, User, LogIn } from 'lucide-react';
+import { ShoppingCart, LogOut, User, LogIn, Settings } from 'lucide-react';
 
-const Header = ({ cartItems, onCartClick, user, onLogout, onLoginClick, onNavigate }) => {
+const Header = ({ cartItems, onCartClick, user, onLogout, onLoginClick, onNavigate, onDashboardClick }) => {
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   
   const scrollToTop = () => {
@@ -35,10 +35,18 @@ const Header = ({ cartItems, onCartClick, user, onLogout, onLoginClick, onNaviga
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <div className="hidden md:flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg">
+              <div className="hidden lg:flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg">
                 <User size={18} />
                 <span className="text-sm">{user.name}</span>
               </div>
+              
+              <button
+                onClick={onDashboardClick}
+                className="p-2 hover:bg-gray-800 rounded-lg transition"
+                title="Dashboard"
+              >
+                <Settings size={24} />
+              </button>
               
               <button 
                 onClick={onCartClick}
