@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Header from './components/Shop/Header';
 import ProductCard from './components/Shop/ProductCard';
 import Cart from './components/Shop/Cart';
 import Hero from './components/Shop/Hero';
+import Footer from './components/Shop/Footer';
 import productsData from './data/products.json';
 
 function App() {
@@ -13,6 +14,11 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Referencias para scroll
+  const productosRef = useRef(null);
+  const ofertasRef = useRef(null);
+  const contactoRef = useRef(null);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -31,14 +37,12 @@ function App() {
   };
 
   const handleAddToCart = (product) => {
-    // Si no hay usuario, mostrar modal de login
     if (!user) {
       setShowAuthModal(true);
       setAuthView('login');
       return;
     }
 
-    // Si hay usuario, agregar al carrito
     setCartItems(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -82,6 +86,14 @@ function App() {
     setAuthView('login');
   };
 
+  // Funciones de scroll
+  const scrollToSection = (ref) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Filtrar productos con ofertas
+  const productosConOferta = productsData.filter(p => p.discount);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Header 
@@ -90,12 +102,36 @@ function App() {
         user={user}
         onLogout={handleLogout}
         onLoginClick={handleLoginClick}
+        onNavigate={{
+          productos: () => scrollToSection(productosRef),
+          ofertas: () => scrollToSection(ofertasRef),
+          contacto: () => scrollToSection(contactoRef)
+        }}
       />
       
-      <Hero />
+      <Hero onViewProducts={() => scrollToSection(productosRef)} />
       
-      <div className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8">Productos Destacados</h2>
+      {/* Sección de Ofertas */}
+      <div ref={ofertasRef} className="bg-gradient-to-r from-red-500 to-pink-500 py-12">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-white mb-8 text-center">
+            🔥 Ofertas Especiales
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {productosConOferta.map(product => (
+              <ProductCard 
+                key={product.id}
+                product={product}
+                onAddToCart={handleAddToCart}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Sección de Todos los Productos */}
+      <div ref={productosRef} className="container mx-auto px-4 py-12">
+        <h2 className="text-3xl font-bold text-gray-800 mb-8">Todos los Productos</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {productsData.map(product => (
             <ProductCard 
@@ -106,6 +142,9 @@ function App() {
           ))}
         </div>
       </div>
+
+      {/* Footer con Contacto */}
+      <Footer contactRef={contactoRef} />
       
       {/* Modal de autenticación */}
       {showAuthModal && (
