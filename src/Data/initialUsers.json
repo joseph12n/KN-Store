@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "name": "Administrador",
+    "email": "admin@knstore.com",
+    "password": "admin123",
+    "role": "admin",
+    "phone": "+57 300 123 4567",
+    "address": "Bogotá, Colombia",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Proveedor Nike",
+    "email": "proveedor@nike.com",
+    "password": "proveedor123",
+    "role": "proveedor",
+    "phone": "+57 301 234 5678",
+    "address": "Medellín, Colombia",
+    "createdAt": "2024-01-15T00:00:00.000Z"
+  }
+]

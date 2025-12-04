@@ -15,12 +15,7 @@ const Login = ({ onLogin, onSwitchToRegister, onClose }) => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
-    onLogin({ email, name: email.split('@')[0] });
+    onLogin(email, password, setError);
   };
 
   return (
@@ -102,9 +97,11 @@ const Login = ({ onLogin, onSwitchToRegister, onClose }) => {
       </div>
 
       <div className="mt-6 pt-6 border-t border-gray-200">
-        <p className="text-sm text-gray-500 text-center">
-          Demo: Cualquier email y contraseña (+6 caracteres)
-        </p>
+        <p className="text-sm text-gray-500 text-center mb-2">Cuentas de prueba:</p>
+        <div className="text-xs text-gray-600 space-y-1">
+          <p><strong>Admin:</strong> admin@knstore.com / admin123</p>
+          <p><strong>Proveedor:</strong> proveedor@nike.com / proveedor123</p>
+        </div>
       </div>
     </div>
   );

@@ -1,32 +1,52 @@
-import { ShoppingCart, LogOut, User, LogIn } from 'lucide-react';
+import { ShoppingCart, LogOut, User, LogIn, Settings } from 'lucide-react';
 
-const Header = ({ cartItems, onCartClick, user, onLogout, onLoginClick }) => {
+const Header = ({ cartItems, onCartClick, user, onLogout, onLoginClick, onNavigate, onDashboardClick }) => {
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   
   return (
     <header className="bg-gray-900 text-white sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <div className="text-2xl font-bold">
+          <button onClick={scrollToTop} className="text-2xl font-bold hover:opacity-80 transition">
             <span className="text-purple-500">KN</span>
             <span className="text-pink-500">-STORE</span>
-          </div>
+          </button>
         </div>
         
         <nav className="hidden md:flex space-x-6">
-          <a href="#" className="hover:text-purple-400 transition">Inicio</a>
-          <a href="#" className="hover:text-purple-400 transition">Productos</a>
-          <a href="#" className="hover:text-purple-400 transition">Ofertas</a>
-          <a href="#" className="hover:text-purple-400 transition">Contacto</a>
+          <button onClick={scrollToTop} className="hover:text-purple-400 transition">
+            Inicio
+          </button>
+          <button onClick={onNavigate.productos} className="hover:text-purple-400 transition">
+            Productos
+          </button>
+          <button onClick={onNavigate.ofertas} className="hover:text-purple-400 transition">
+            Ofertas
+          </button>
+          <button onClick={onNavigate.contacto} className="hover:text-purple-400 transition">
+            Contacto
+          </button>
         </nav>
         
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <div className="hidden md:flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg">
+              <div className="hidden lg:flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg">
                 <User size={18} />
                 <span className="text-sm">{user.name}</span>
               </div>
+              
+              <button
+                onClick={onDashboardClick}
+                className="p-2 hover:bg-gray-800 rounded-lg transition"
+                title="Dashboard"
+              >
+                <Settings size={24} />
+              </button>
               
               <button 
                 onClick={onCartClick}
