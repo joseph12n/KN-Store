@@ -5,7 +5,6 @@ import Header from './components/Shop/Header';
 import ProductCard from './components/Shop/ProductCard';
 import Cart from './components/Shop/Cart';
 import Hero from './components/Shop/Hero';
-import Footer from './components/Shop/Footer';
 import productsData from './data/products.json';
 
 function App() {
@@ -84,7 +83,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-100">
       <Header 
         cartItems={cartItems}
         onCartClick={handleCartClick}
@@ -95,7 +94,7 @@ function App() {
       
       <Hero />
       
-      <div className="container mx-auto px-4 py-12 flex-grow">
+      <div className="container mx-auto px-4 py-12">
         <h2 className="text-3xl font-bold text-gray-800 mb-8">Productos Destacados</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {productsData.map(product => (
@@ -107,10 +106,7 @@ function App() {
           ))}
         </div>
       </div>
-
-      {/* Footer */}
-      <Footer />
-      
+    
       {/* Modal de autenticación */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
