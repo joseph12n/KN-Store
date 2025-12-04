@@ -96,17 +96,20 @@ const Footer = ({ contactRef }) => {
                 <Phone size={20} className="text-purple-500 mt-1 flex-shrink-0" />
                 <div>
                   <p className="text-sm">Teléfono</p>
-                  <a href="tel:+573001234567" className="hover:text-purple-400 transition">
-                    +57 300 123 4567
+                  <a href="tel:+573143788592" className="hover:text-purple-400 transition">
+                    +57 314 378 8592
+                  </a>
+                  <p className="text-sm">Teléfono</p>
+                  <a href="tel:+573118181605" className="hover:text-purple-400 transition">
+                    +57 311 818 1605
                   </a>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin size={20} className="text-purple-500 mt-1 flex-shrink-0" />
                 <div>
-                  <p className="text-sm">Dirección</p>
+                  <p className="text-sm">Ubicación</p>
                   <p>Bogotá, Colombia</p>
-                  <p>Calle 100 #15-20</p>
                 </div>
               </li>
             </ul>
