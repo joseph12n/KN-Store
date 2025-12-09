@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X, Users, Settings, ShoppingBag } from 'lucide-react';
+import { X, Users, Settings, ShoppingBag, Package } from 'lucide-react';
 import UserManagement from './UserManagement';
 import UserProfile from './UserProfile';
+import ProductManagement from './ProductManagement';
 
 const Dashboard = ({ isOpen, onClose, user }) => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -9,6 +10,7 @@ const Dashboard = ({ isOpen, onClose, user }) => {
   if (!isOpen) return null;
 
   const canManageUsers = user.role === 'admin';
+  const canManageProducts = user.role === 'admin' || user.role === 'proveedor';
 
   return (
     <>
@@ -33,10 +35,10 @@ const Dashboard = ({ isOpen, onClose, user }) => {
         {/* Tabs */}
         <div className="border-b bg-gray-50">
           <div className="container mx-auto px-4">
-            <div className="flex gap-4">
+            <div className="flex gap-4 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`flex items-center gap-2 px-4 py-3 font-semibold transition border-b-2 ${
+                className={`flex items-center gap-2 px-4 py-3 font-semibold transition border-b-2 whitespace-nowrap ${
                   activeTab === 'profile'
                     ? 'border-purple-600 text-purple-600'
                     : 'border-transparent text-gray-600 hover:text-purple-600'
@@ -46,17 +48,31 @@ const Dashboard = ({ isOpen, onClose, user }) => {
                 Mi Perfil
               </button>
               
+              {canManageProducts && (
+                <button
+                  onClick={() => setActiveTab('products')}
+                  className={`flex items-center gap-2 px-4 py-3 font-semibold transition border-b-2 whitespace-nowrap ${
+                    activeTab === 'products'
+                      ? 'border-purple-600 text-purple-600'
+                      : 'border-transparent text-gray-600 hover:text-purple-600'
+                  }`}
+                >
+                  <Package size={20} />
+                  Productos
+                </button>
+              )}
+              
               {canManageUsers && (
                 <button
                   onClick={() => setActiveTab('users')}
-                  className={`flex items-center gap-2 px-4 py-3 font-semibold transition border-b-2 ${
+                  className={`flex items-center gap-2 px-4 py-3 font-semibold transition border-b-2 whitespace-nowrap ${
                     activeTab === 'users'
                       ? 'border-purple-600 text-purple-600'
                       : 'border-transparent text-gray-600 hover:text-purple-600'
                   }`}
                 >
                   <Users size={20} />
-                  Gestión de Usuarios
+                  Usuarios
                 </button>
               )}
             </div>
@@ -66,6 +82,7 @@ const Dashboard = ({ isOpen, onClose, user }) => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
           {activeTab === 'profile' && <UserProfile user={user} onClose={onClose} />}
+          {activeTab === 'products' && canManageProducts && <ProductManagement currentUser={user} />}
           {activeTab === 'users' && canManageUsers && <UserManagement currentUser={user} />}
         </div>
       </div>

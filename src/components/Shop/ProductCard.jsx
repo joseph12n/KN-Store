@@ -25,21 +25,21 @@ const ProductCard = ({ product, onAddToCart }) => {
         </span>
       </div>
       
-      <div className="p-4">
-        <h3 className="text-lg font-bold text-gray-800 mb-1">{product.name}</h3>
-        <p className="text-sm text-gray-600 mb-3">{product.category}</p>
-        
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <span className="text-2xl font-bold text-gray-900">{formatPrice(product.price)}</span>
-            {product.originalPrice && (
-              <span className="text-sm text-gray-500 line-through ml-2">
-                {formatPrice(product.originalPrice)}
-              </span>
-            )}
+        <div className="p-4">
+          <h3 className="text-lg font-bold text-gray-800 mb-1">{product.name}</h3>
+          <p className="text-sm text-gray-600 mb-3">{product.category}</p>
+          
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <span className="text-2xl font-bold text-gray-900">{formatPrice(product.price)}</span>
+              {product.originalPrice && (
+                <span className="text-sm text-gray-500 line-through ml-2">
+                  {formatPrice(product.originalPrice)}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-        
+          
         <button 
           onClick={() => onAddToCart(product)}
           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition font-semibold"
