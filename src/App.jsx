@@ -28,11 +28,11 @@ import { initializeUsers, login, register, logout, getCurrentUser } from './util
 // Servicios de productos (funciones para gestionar productos)
 import { initializeProducts, getProducts } from './utils/productService';
 
+import { initializeSales } from './utils/salesService';
 // ============================================
 // COMPONENTE PRINCIPAL - APP
 // ============================================
 function App() {
-  
   // ============================================
   // ESTADOS - Variables reactivas de la aplicación
   // ============================================
@@ -81,12 +81,13 @@ function App() {
     
     // Inicializar productos en localStorage (si no existen)
     initializeProducts(initialProductsData);
-    
+    initializeSales();
     // Verificar si hay un usuario con sesión activa
     const currentUser = getCurrentUser();
     if (currentUser) {
       // Si hay sesión activa, establecer el usuario
       setUser(currentUser);
+      
     }
     
     // Cargar productos desde localStorage
@@ -371,7 +372,14 @@ function App() {
           )}
         </div>
       </div>
-
+<Cart 
+  isOpen={isCartOpen}
+  onClose={() => setIsCartOpen(false)}
+  cartItems={cartItems}
+  onUpdateQuantity={handleUpdateQuantity}
+  onRemove={handleRemove}
+  user={user} 
+/>
       {/* ========================================
           FOOTER - Pie de página con contacto y redes
           ======================================== */}
@@ -443,6 +451,7 @@ function App() {
     </div>
   );
 }
+
 
 // ============================================
 // EXPORTACIÓN DEL COMPONENTE
