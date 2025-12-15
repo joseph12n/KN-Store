@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { X, Users, Settings, ShoppingBag, Package } from 'lucide-react';
+import { X, Users, Settings, ShoppingBag, Package, TrendingUp, Receipt } from 'lucide-react';
 import UserManagement from './UserManagement';
 import UserProfile from './UserProfile';
 import ProductManagement from './ProductManagement';
+import SalesReport from './SalesReport';
+import MyPurchases from './MyPurchases';
 
 const Dashboard = ({ isOpen, onClose, user }) => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -11,6 +13,7 @@ const Dashboard = ({ isOpen, onClose, user }) => {
 
   const canManageUsers = user.role === 'admin';
   const canManageProducts = user.role === 'admin' || user.role === 'proveedor';
+  const canViewSalesReport = user.role === 'admin';
 
   return (
     <>
@@ -18,7 +21,7 @@ const Dashboard = ({ isOpen, onClose, user }) => {
         className="fixed inset-0 bg-black bg-opacity-50 z-50"
         onClick={onClose}
       />
-      <div className="fixed right-0 top-0 h-full w-full lg:w-3/4 bg-white shadow-2xl z-50 flex flex-col">
+      <div className="fixed right-0 top-0 h-full w-full lg:w-3/4 xl:w-4/5 bg-white shadow-2xl z-50 flex flex-col">
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center bg-gradient-to-r from-purple-600 to-pink-600 text-white">
           <div>
@@ -33,9 +36,10 @@ const Dashboard = ({ isOpen, onClose, user }) => {
         </div>
 
         {/* Tabs */}
-        <div className="border-b bg-gray-50">
+        <div className="border-b bg-gray-50 overflow-x-auto">
           <div className="container mx-auto px-4">
-            <div className="flex gap-4 overflow-x-auto">
+            <div className="flex gap-2 min-w-max">
+              {/* Mi Perfil - Todos */}
               <button
                 onClick={() => setActiveTab('profile')}
                 className={`flex items-center gap-2 px-4 py-3 font-semibold transition border-b-2 whitespace-nowrap ${
@@ -48,6 +52,35 @@ const Dashboard = ({ isOpen, onClose, user }) => {
                 Mi Perfil
               </button>
               
+              {/* Mis Compras - Todos */}
+              <button
+                onClick={() => setActiveTab('purchases')}
+                className={`flex items-center gap-2 px-4 py-3 font-semibold transition border-b-2 whitespace-nowrap ${
+                  activeTab === 'purchases'
+                    ? 'border-purple-600 text-purple-600'
+                    : 'border-transparent text-gray-600 hover:text-purple-600'
+                }`}
+              >
+                <Receipt size={20} />
+                Mis Compras
+              </button>
+
+              {/* Reporte de Ventas - Solo Admin */}
+              {canViewSalesReport && (
+                <button
+                  onClick={() => setActiveTab('sales')}
+                  className={`flex items-center gap-2 px-4 py-3 font-semibold transition border-b-2 whitespace-nowrap ${
+                    activeTab === 'sales'
+                      ? 'border-purple-600 text-purple-600'
+                      : 'border-transparent text-gray-600 hover:text-purple-600'
+                  }`}
+                >
+                  <TrendingUp size={20} />
+                  Reporte de Ventas
+                </button>
+              )}
+              
+              {/* Productos - Admin y Proveedor */}
               {canManageProducts && (
                 <button
                   onClick={() => setActiveTab('products')}
@@ -62,6 +95,7 @@ const Dashboard = ({ isOpen, onClose, user }) => {
                 </button>
               )}
               
+              {/* Usuarios - Solo Admin */}
               {canManageUsers && (
                 <button
                   onClick={() => setActiveTab('users')}
@@ -82,6 +116,8 @@ const Dashboard = ({ isOpen, onClose, user }) => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
           {activeTab === 'profile' && <UserProfile user={user} onClose={onClose} />}
+          {activeTab === 'purchases' && <MyPurchases user={user} />}
+          {activeTab === 'sales' && canViewSalesReport && <SalesReport />}
           {activeTab === 'products' && canManageProducts && <ProductManagement currentUser={user} />}
           {activeTab === 'users' && canManageUsers && <UserManagement currentUser={user} />}
         </div>
