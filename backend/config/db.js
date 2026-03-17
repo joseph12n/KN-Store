@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const conectarDB = async () => {
+const connectDB = async () => {
     try {
         const url = process.env.MONGO_URI || "mongodb://localhost:27017/kn_store";
         
@@ -13,4 +13,4 @@ const conectarDB = async () => {
     }
 };
 
-module.exports = conectarDB;
+module.exports = connectDB;
