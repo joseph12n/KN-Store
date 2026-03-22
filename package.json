@@ -2,7 +2,9 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "seed": "node seedUsers.js"
+    "seed": "node seedUsers.js",
+    "seedData": "node seedData.js",
+    "testCategories": "node test_categories_module.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
