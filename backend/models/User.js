@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Middleware pre-save para encriptar la contraseña antes de guardarla en la base de datos
-userSchema.pre('save', async function() {
+userSchema.pre('save', async function () {
   // Solo encripta si la contraseña ha sido modificada (o es nueva)
   if (!this.isModified('password')) {
     return;
@@ -44,12 +44,12 @@ userSchema.pre('save', async function() {
 });
 
 // Método de instancia para verificar la contraseña ingresada con la base de datos
-userSchema.methods.matchPassword = async function(enteredPassword) {
+userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 // Eliminar la contraseña de la respuesta JSON para mayor seguridad
-userSchema.methods.toJSON = function() {
+userSchema.methods.toJSON = function () {
   const userObject = this.toObject();
   delete userObject.password;
   return userObject;
