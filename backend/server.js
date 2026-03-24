@@ -14,6 +14,9 @@ app.use(express.json());
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
 
+const categoryRoutes = require('./routes/categoryRoutes');
+app.use('/api/categories', categoryRoutes);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor listo en el puerto ${PORT}`);
