@@ -73,13 +73,13 @@ router.delete(
 router.post(
     '/products',
     protect,
-    authorizeRoles(['admin', 'coordinador']),
+    authorizeRoles('Admin', 'Provider'),
     validateProduct,
     productController.createProduct
 );
 
 // ✔ Listar productos
-router.get('/products', productController.getProducts);
+router.get('/products', protect, productController.getProducts);
 
 // ✔ Obtener producto por ID
 router.get('/products/:id', productController.getProductById);
@@ -88,7 +88,7 @@ router.get('/products/:id', productController.getProductById);
 router.put(
     '/products/:id',
     protect,
-    authorizeRoles(['admin', 'coordinador']),
+    authorizeRoles('Admin', 'Provider'),
     validateProduct,
     productController.updateProduct
 );
@@ -97,7 +97,7 @@ router.put(
 router.delete(
     '/products/:id',
     protect,
-    authorizeRoles(['admin']),
+    authorizeRoles('Admin'),
     productController.deleteProduct
 );
 

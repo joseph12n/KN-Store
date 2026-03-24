@@ -21,9 +21,6 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/subcategories', subcategoryRoutes);
 app.use('/api/products', productRoutes);
 
-const categoryRoutes = require('./routes/categoryRoutes');
-app.use('/api/categories', categoryRoutes);
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor listo en el puerto ${PORT}`);
