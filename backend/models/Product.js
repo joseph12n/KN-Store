@@ -188,18 +188,17 @@ productSchema.virtual('daysUntilAvailable').get(function () {
 // ==================== MIDDLEWARES ====================
 
 // Pre-save: generar slug automáticamente
-productSchema.pre('save', function (next) {
+productSchema.pre('save', async function () {
     if (this.isModified('name')) {
         this.slug = slugify(this.name, {
             lower: true,
             strict: true
         });
     }
-    next();
 });
 
 // Post-save: manejar errores de duplicados
-productSchema.post('save', function (error, doc, next) {
+productSchema.post('save', { errorHandler: true }, function (error, doc, next) {
     if (error.name === 'MongoServerError' && error.code === 11000) {
         const field = Object.keys(error.keyPattern)[0];
         next(new Error(`${field} ya existe en la base de datos`));
