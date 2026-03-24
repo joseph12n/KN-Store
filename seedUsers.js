@@ -33,8 +33,10 @@ const importData = async () => {
       },
     ];
 
-    // Insertamos los usuarios
-    await User.insertMany(users);
+    // Insertamos los usuarios (usamos create para ejecutar middleware de hash)
+    for (const userData of users) {
+      await User.create(userData);
+    }
 
     console.log('✅ Usuarios Iniciales Importados Exitosamente');
     console.log('--- Credenciales de Prueba ---');
