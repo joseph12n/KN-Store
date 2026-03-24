@@ -67,3 +67,33 @@ exports.validateSubcategory = [
         next();
     }
 ];
+
+// Validación para actualización partial (puede incluir sólo uno o varios campos)
+exports.validateSubcategoryUpdate = [
+    check('name')
+        .optional()
+        .isLength({ min: 3 })
+        .withMessage('El nombre debe tener al menos 3 caracteres'),
+
+    check('description')
+        .optional()
+        .isLength({ min: 5 })
+        .withMessage('La descripción debe tener al menos 5 caracteres'),
+
+    check('category')
+        .optional()
+        .isMongoId()
+        .withMessage('El ID de la categoría no es válido'),
+
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Errores de validación',
+                errors: errors.array()
+            });
+        }
+        next();
+    }
+];
