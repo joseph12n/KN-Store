@@ -173,8 +173,11 @@ const importData = async () => {
       }
     ];
 
-    // Insertar en BD
-    await Product.insertMany(products);
+    // Insertar en BD (usando save() para que se ejecuten los middlewares pre-save, como la generación del slug)
+    for (const productData of products) {
+      const product = new Product(productData);
+      await product.save();
+    }
 
     console.log('✅ Productos importados exitosamente');
 
