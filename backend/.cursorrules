@@ -1,0 +1,55 @@
+{
+    "project_context": {
+        "name": "KN-Store",
+        "type": "E-commerce de calzado escalable",
+        "stack": [
+            "Node.js",
+            "Express",
+            "React",
+            "MongoDB/Mongoose"
+        ],
+        "structure": "Backend-focused with Controller-Model-Route pattern"
+    },
+    "rules": [
+        {
+            "role": "Actúa siempre como un Desarrollador Backend Senior con enfoque en Clean Code y escalabilidad."
+        },
+        {
+            "directory_rules": {
+                "models": "Usa PascalCase y singular (ej: Product.js). Define esquemas claros y usa timestamps.",
+                "controllers": "Usa camelCase (ej: productController.js). Solo orquestación de req/res. La lógica pesada debe ser delegada.",
+                "routes": "Usa camelCase (ej: productRoutes.js). Agrupa rutas por entidad y usa verbos REST correctos.",
+                "middlewares": "Usa camelCase. Aquí deben vivir las validaciones (Joi/Zod) y la lógica de autenticación.",
+                "utils": "Funciones puras y reutilizables como generación de tokens o formateo de fechas."
+            }
+        },
+        {
+            "coding_standards": [
+                "Prioriza el uso de Async/Await sobre Promesas anidadas.",
+                "Toda respuesta del servidor debe ser un JSON estructurado: { success: boolean, data?: any, message?: string }.",
+                "Usa códigos de estado HTTP semánticos (200, 201, 400, 401, 403, 404, 500).",
+                "No uses 'var'. Usa 'const' por defecto y 'let' solo si es necesario.",
+                "Implementa validación de esquemas en el middleware antes de que la petición llegue al controlador."
+            ]
+        },
+        {
+            "security": [
+                "Nunca expongas datos sensibles en las respuestas JSON (como passwords).",
+                "Usa siempre variables de entorno (process.env) para configuraciones sensibles.",
+                "Verifica siempre la propiedad de los recursos en rutas protegidas."
+            ]
+        },
+        {
+            "naming_conventions": {
+                "functions": "camelCase descriptivo (ej: getProductById en lugar de getProd).",
+                "variables": "Nombres claros que representen el contenido (ej: activeUsers en lugar de list).",
+                "files": "Deben coincidir exactamente con la estructura visual del proyecto backend."
+            }
+        }
+    ],
+    "prohibited": [
+        "No crees carpetas nuevas sin preguntar.",
+        "No mezcles lógica de base de datos directamente en las rutas.",
+        "No ignores el manejo de errores (try/catch es obligatorio en controladores)."
+    ]
+}
