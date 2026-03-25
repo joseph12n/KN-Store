@@ -1,15 +1,14 @@
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
 // Modelos
-const Product = require('./models/Product');
-const Category = require('./models/Category');
-const Subcategory = require('./models/Subcategory');
+const Product = require('../models/Product');
+const Category = require('../models/Category');
+const Subcategory = require('../models/Subcategory');
 
 // Conexión
-const conectarDB = require('./config/db');
+const conectarDB = require('../config/db');
 
-dotenv.config({ path: './.env' });
+dotenv.config({ path: `${__dirname}/../.env` });
 
 const importData = async () => {
   try {
@@ -21,7 +20,7 @@ const importData = async () => {
     const categories = await Category.find();
 
     if (categories.length === 0) {
-      console.log('⚠️ No hay categorías, debes crear categorías primero');
+      console.log('⚠️ No hay categorías, ejecuta primero: npm run seed:categories');
       process.exit();
     }
 
@@ -29,7 +28,7 @@ const importData = async () => {
     const subcategories = await Subcategory.find();
 
     if (subcategories.length === 0) {
-      console.log('⚠️ No hay subcategorías, debes crear subcategorías primero');
+      console.log('⚠️ No hay subcategorías, ejecuta primero: npm run seed:subcategories');
       process.exit();
     }
 
@@ -202,4 +201,3 @@ const importData = async () => {
 };
 
 importData();
-

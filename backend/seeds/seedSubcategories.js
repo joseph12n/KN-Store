@@ -1,10 +1,9 @@
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const Category = require('./backend/models/Category');
-const Subcategory = require('./backend/models/Subcategory');
-const conectarDB = require('./backend/config/db');
+const Category = require('../models/Category');
+const Subcategory = require('../models/Subcategory');
+const conectarDB = require('../config/db');
 
-dotenv.config({ path: './backend/.env' });
+dotenv.config({ path: `${__dirname}/../.env` });
 
 const importData = async () => {
   try {
@@ -13,7 +12,7 @@ const importData = async () => {
     const categories = await Category.find();
 
     if (categories.length === 0) {
-      console.log('⚠️  No hay categorías. Ejecuta primero: node seedData.js');
+      console.log('⚠️  No hay categorías. Ejecuta primero: npm run seed:categories');
       process.exit(1);
     }
 

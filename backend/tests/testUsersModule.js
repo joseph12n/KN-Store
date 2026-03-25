@@ -1,45 +1,4 @@
-const http = require('http');
-
-const PORT = 3000;
-const BASE_URL = `http://localhost:${PORT}/api/users`;
-
-// Helper interactivo rápido para realizar peticiones HTTP (nativo de Node sin dependencias extra)
-const makeRequest = (method, path, data = null, token = null) => {
-    return new Promise((resolve, reject) => {
-        const url = new URL(`${BASE_URL}${path}`);
-        
-        const options = {
-            hostname: url.hostname,
-            port: url.port,
-            path: url.pathname + url.search,
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        };
-
-        if (token) {
-            options.headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const req = http.request(options, (res) => {
-            let body = '';
-            res.on('data', (chunk) => body += chunk);
-            res.on('end', () => {
-                let parsedBody = body;
-                try { parsedBody = JSON.parse(body); } catch(e) {}
-                resolve({ status: res.statusCode, data: parsedBody });
-            });
-        });
-
-        req.on('error', (e) => reject(e));
-
-        if (data) {
-            req.write(JSON.stringify(data));
-        }
-        req.end();
-    });
-};
+const { makeRequest, BASE_URLS } = require('./helpers/httpClient');
 
 const runTests = async () => {
     console.log("==========================================");
@@ -61,7 +20,7 @@ const runTests = async () => {
         // 1.1 Registro de un Cliente (Exitoso)
         const emailClient = `test_client_${Date.now()}@test.com`;
         console.log(`[POST /register] Registrando cliente: ${emailClient}`);
-        let res = await makeRequest('POST', '/register', {
+        let res = await makeRequest('POST', `${BASE_URLS.users}/register`, {
             name: "Test Cliente",
             email: emailClient,
             password: "password123"
@@ -76,7 +35,7 @@ const runTests = async () => {
 
         // 1.2 Login del Cliente
         console.log(`\n[POST /login] Iniciando sesión con: ${emailClient}`);
-        res = await makeRequest('POST', '/login', {
+        res = await makeRequest('POST', `${BASE_URLS.users}/login`, {
             email: emailClient,
             password: "password123"
         });
@@ -92,7 +51,7 @@ const runTests = async () => {
         
         // 2.1 Obtener Perfil Propio
         console.log(`[GET /profile] Obteniendo perfil del cliente test`);
-        res = await makeRequest('GET', '/profile', null, clientToken);
+        res = await makeRequest('GET', `${BASE_URLS.users}/profile`, null, clientToken);
          if(res.status === 200) {
              console.log(` ✅ Obtuvo perfil correctly (Role: ${res.data.role}).`);
         } else {
@@ -101,25 +60,18 @@ const runTests = async () => {
 
         // 2.2 Validación de Permisos (Un Cliente intentando acceder a ruta de Admin/Provider)
         console.log(`\n[GET /] (RUTA PROTEGIDA) Intentando obtener todos los usuarios como Cliente`);
-        res = await makeRequest('GET', '', null, clientToken);
+        res = await makeRequest('GET', BASE_URLS.users, null, clientToken);
         if(res.status === 403) {
              console.log(` ✅ Bloqueado correctamente (Código 403) por rol insuficiente.`);
         } else {
              console.log(` ❌ Fallo la protección RBAC. Obteniendo status ${res.status}`);
         }
 
-        // -----------------------------------------------------
-        // * NOTA PARA ADMIN/PROVIDER *
-        // Como los Admins sólo pueden ser creados por otro Admin (y el seeding inicial no lo hemos hecho automatizado aquí)
-        // en esta prueba no podemos loguear dinámicamente a un Admin sin primero forzarlo por BD o Seeder.
-        // Simularemos el final de la prueba eliminando la cuenta del cliente para dejar limpio el sistema.
-        // -----------------------------------------------------
-
         console.log("\n--- Limpieza ---");
         
         // 2.3 Cliente elimina su propia cuenta (Eliminación exitosa)
         console.log(`[DELETE /profile] Cliente borrando su propia cuenta`);
-        res = await makeRequest('DELETE', '/profile', null, clientToken);
+        res = await makeRequest('DELETE', `${BASE_URLS.users}/profile`, null, clientToken);
         if(res.status === 200) {
              console.log(` ✅ Perfil eliminado correctamente de la Base de Datos.`);
         } else {

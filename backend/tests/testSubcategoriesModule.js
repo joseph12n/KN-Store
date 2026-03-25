@@ -1,43 +1,4 @@
-const http = require('http');
-
-const PORT = 3000;
-const BASE_URL = `http://localhost:${PORT}/api/subcategories`;
-const BASE_URL_USERS = `http://localhost:${PORT}/api/users`;
-
-const makeRequest = (method, url, data = null, token = null) => {
-    return new Promise((resolve, reject) => {
-        const parsedUrl = new URL(url);
-
-        const options = {
-            hostname: parsedUrl.hostname,
-            port: parsedUrl.port,
-            path: parsedUrl.pathname + parsedUrl.search,
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        };
-
-        if (token) {
-            options.headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const req = http.request(options, (res) => {
-            let body = '';
-            res.on('data', (chunk) => (body += chunk));
-            res.on('end', () => {
-                let parsed = body;
-                try { parsed = JSON.parse(body); } catch {}
-                resolve({ status: res.statusCode, data: parsed });
-            });
-        });
-
-        req.on('error', reject);
-
-        if (data) req.write(JSON.stringify(data));
-        req.end();
-    });
-};
+const { makeRequest, BASE_URLS, PORT } = require('./helpers/httpClient');
 
 const runTests = async () => {
     console.log('==========================================');
@@ -54,7 +15,7 @@ const runTests = async () => {
         // =============================
         console.log('--- LOGIN ADMIN ---');
 
-        let res = await makeRequest('POST', `${BASE_URL_USERS}/login`, {
+        let res = await makeRequest('POST', `${BASE_URLS.users}/login`, {
             email: 'admin@knstore.com',
             password: 'password123',
         });
@@ -72,7 +33,7 @@ const runTests = async () => {
         // =============================
         console.log('\n--- OBTENIENDO CATEGORY ID ---');
 
-        const categoriesRes = await makeRequest('GET', `http://localhost:${PORT}/api/categories`);
+        const categoriesRes = await makeRequest('GET', BASE_URLS.categories);
 
         let categoryId = null;
 
@@ -91,7 +52,7 @@ const runTests = async () => {
 
         const name = `Sub Test ${Date.now()}`;
 
-        res = await makeRequest('POST', BASE_URL, {
+        res = await makeRequest('POST', BASE_URLS.subcategories, {
             name,
             description: 'Subcategoría de prueba',
             category: categoryId
@@ -109,7 +70,7 @@ const runTests = async () => {
         // =============================
         console.log('\n--- LISTAR ---');
 
-        res = await makeRequest('GET', BASE_URL);
+        res = await makeRequest('GET', BASE_URLS.subcategories);
 
         if (res.status === 200) {
             console.log(`✅ Subcategorías obtenidas: ${res.data.count}`);
@@ -122,7 +83,7 @@ const runTests = async () => {
         // =============================
         console.log('\n--- GET BY ID ---');
 
-        res = await makeRequest('GET', `${BASE_URL}/${subcategoryId}`);
+        res = await makeRequest('GET', `${BASE_URLS.subcategories}/${subcategoryId}`);
 
         if (res.status === 200) {
             console.log('✅ Subcategoría encontrada');
@@ -135,7 +96,7 @@ const runTests = async () => {
         // =============================
         console.log('\n--- UPDATE ---');
 
-        res = await makeRequest('PUT', `${BASE_URL}/${subcategoryId}`, {
+        res = await makeRequest('PUT', `${BASE_URLS.subcategories}/${subcategoryId}`, {
             name: name + ' Updated'
         }, adminToken);
 
@@ -150,7 +111,7 @@ const runTests = async () => {
         // =============================
         console.log('\n--- DELETE ---');
 
-        res = await makeRequest('DELETE', `${BASE_URL}/${subcategoryId}`, null, adminToken);
+        res = await makeRequest('DELETE', `${BASE_URLS.subcategories}/${subcategoryId}`, null, adminToken);
 
         if (res.status === 200) {
             console.log('✅ Subcategoría eliminada');

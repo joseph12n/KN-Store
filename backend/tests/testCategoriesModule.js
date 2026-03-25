@@ -1,46 +1,4 @@
-const http = require('http');
-
-const PORT = 3000;
-const BASE_URL_CATEGORIES = `http://localhost:${PORT}/api/categories`;
-const BASE_URL_USERS = `http://localhost:${PORT}/api/users`;
-
-// Helper para realizar peticiones HTTP nativas sin dependencias extra
-const makeRequest = (method, url, data = null, token = null) => {
-    return new Promise((resolve, reject) => {
-        const parsedUrl = new URL(url);
-
-        const options = {
-            hostname: parsedUrl.hostname,
-            port: parsedUrl.port,
-            path: parsedUrl.pathname + parsedUrl.search,
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        };
-
-        if (token) {
-            options.headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const req = http.request(options, (res) => {
-            let body = '';
-            res.on('data', (chunk) => (body += chunk));
-            res.on('end', () => {
-                let parsedBody = body;
-                try { parsedBody = JSON.parse(body); } catch (e) {}
-                resolve({ status: res.statusCode, data: parsedBody });
-            });
-        });
-
-        req.on('error', (e) => reject(e));
-
-        if (data) {
-            req.write(JSON.stringify(data));
-        }
-        req.end();
-    });
-};
+const { makeRequest, BASE_URLS } = require('./helpers/httpClient');
 
 const runTests = async () => {
     console.log('==========================================');
@@ -62,7 +20,7 @@ const runTests = async () => {
         console.log('--- 0. Autenticación de Roles ---');
 
         // Login Admin
-        let res = await makeRequest('POST', `${BASE_URL_USERS}/login`, {
+        let res = await makeRequest('POST', `${BASE_URLS.users}/login`, {
             email: 'admin@knstore.com',
             password: 'password123',
         });
@@ -74,7 +32,7 @@ const runTests = async () => {
         }
 
         // Login Provider
-        res = await makeRequest('POST', `${BASE_URL_USERS}/login`, {
+        res = await makeRequest('POST', `${BASE_URLS.users}/login`, {
             email: 'proveedor@knstore.com',
             password: 'password123',
         });
@@ -86,7 +44,7 @@ const runTests = async () => {
         }
 
         // Login Cliente
-        res = await makeRequest('POST', `${BASE_URL_USERS}/login`, {
+        res = await makeRequest('POST', `${BASE_URLS.users}/login`, {
             email: 'cliente@gmail.com',
             password: 'password123',
         });
@@ -104,7 +62,7 @@ const runTests = async () => {
 
         // 1.1 Obtener todas las categorías (sin token)
         console.log('[GET /api/categories] Obteniendo todas las categorías (público)');
-        res = await makeRequest('GET', BASE_URL_CATEGORIES);
+        res = await makeRequest('GET', BASE_URLS.categories);
         if (res.status === 200 && Array.isArray(res.data)) {
             console.log(` ✅ Se obtuvieron ${res.data.length} categorías correctamente.`);
         } else {
@@ -119,7 +77,7 @@ const runTests = async () => {
         // 2.1 Crear categoría como Admin
         const nombreCategoriaAdmin = `Calzado Test Admin ${Date.now()}`;
         console.log(`[POST /api/categories] Creando categoría: "${nombreCategoriaAdmin}"`);
-        res = await makeRequest('POST', BASE_URL_CATEGORIES, {
+        res = await makeRequest('POST', BASE_URLS.categories, {
             name: nombreCategoriaAdmin,
             description: 'Categoría de prueba creada por Admin',
         }, adminToken);
@@ -133,7 +91,7 @@ const runTests = async () => {
         // 2.2 Obtener categoría por ID
         if (createdCategoryId) {
             console.log(`\n[GET /api/categories/${createdCategoryId}] Obteniendo categoría por ID (público)`);
-            res = await makeRequest('GET', `${BASE_URL_CATEGORIES}/${createdCategoryId}`);
+            res = await makeRequest('GET', `${BASE_URLS.categories}/${createdCategoryId}`);
             if (res.status === 200 && res.data._id === createdCategoryId) {
                 console.log(` ✅ Categoría encontrada: "${res.data.name}"`);
             } else {
@@ -144,7 +102,7 @@ const runTests = async () => {
         // 2.3 Actualizar categoría como Admin
         if (createdCategoryId) {
             console.log(`\n[PUT /api/categories/${createdCategoryId}] Actualizando categoría como Admin`);
-            res = await makeRequest('PUT', `${BASE_URL_CATEGORIES}/${createdCategoryId}`, {
+            res = await makeRequest('PUT', `${BASE_URLS.categories}/${createdCategoryId}`, {
                 name: `${nombreCategoriaAdmin} (Actualizada)`,
                 description: 'Descripción actualizada por Admin',
             }, adminToken);
@@ -163,7 +121,7 @@ const runTests = async () => {
         // 3.1 Crear categoría como Provider
         const nombreCategoriaProvider = `Calzado Test Provider ${Date.now()}`;
         console.log(`[POST /api/categories] Creando categoría: "${nombreCategoriaProvider}"`);
-        res = await makeRequest('POST', BASE_URL_CATEGORIES, {
+        res = await makeRequest('POST', BASE_URLS.categories, {
             name: nombreCategoriaProvider,
             description: 'Categoría de prueba creada por Provider',
         }, providerToken);
@@ -177,7 +135,7 @@ const runTests = async () => {
         // 3.2 Provider intenta eliminar una categoría (solo Admin puede)
         if (createdByProviderId) {
             console.log(`\n[DELETE /api/categories/${createdByProviderId}] Provider intentando eliminar (debe fallar con 403)`);
-            res = await makeRequest('DELETE', `${BASE_URL_CATEGORIES}/${createdByProviderId}`, null, providerToken);
+            res = await makeRequest('DELETE', `${BASE_URLS.categories}/${createdByProviderId}`, null, providerToken);
             if (res.status === 403) {
                 console.log(' ✅ Bloqueado correctamente (403) - Provider no puede eliminar categorías.');
             } else {
@@ -192,7 +150,7 @@ const runTests = async () => {
 
         // 4.1 Cliente intenta crear categoría (debe fallar con 403)
         console.log('[POST /api/categories] Cliente intentando crear categoría (debe fallar con 403)');
-        res = await makeRequest('POST', BASE_URL_CATEGORIES, {
+        res = await makeRequest('POST', BASE_URLS.categories, {
             name: 'Categoría No Autorizada',
             description: 'Esto no debería crearse',
         }, clientToken);
@@ -204,7 +162,7 @@ const runTests = async () => {
 
         // 4.2 Sin token intenta crear categoría (debe fallar con 401)
         console.log('\n[POST /api/categories] Sin token intentando crear categoría (debe fallar con 401)');
-        res = await makeRequest('POST', BASE_URL_CATEGORIES, {
+        res = await makeRequest('POST', BASE_URLS.categories, {
             name: 'Categoría Sin Token',
         });
         if (res.status === 401) {
@@ -220,7 +178,7 @@ const runTests = async () => {
 
         // 5.1 Crear categoría sin nombre (debe fallar)
         console.log('[POST /api/categories] Creando categoría sin nombre (debe fallar con 400)');
-        res = await makeRequest('POST', BASE_URL_CATEGORIES, {
+        res = await makeRequest('POST', BASE_URLS.categories, {
             description: 'Sin nombre',
         }, adminToken);
         if (res.status === 400) {
@@ -231,7 +189,7 @@ const runTests = async () => {
 
         // 5.2 Obtener categoría con ID inválido
         console.log('\n[GET /api/categories/id_invalido] Buscando categoría con ID inexistente (debe fallar)');
-        res = await makeRequest('GET', `${BASE_URL_CATEGORIES}/000000000000000000000000`);
+        res = await makeRequest('GET', `${BASE_URLS.categories}/000000000000000000000000`);
         if (res.status === 404) {
             console.log(' ✅ Respuesta correcta (404) - Categoría no encontrada.');
         } else {
@@ -245,7 +203,7 @@ const runTests = async () => {
 
         if (createdCategoryId) {
             console.log(`[DELETE /api/categories/${createdCategoryId}] Admin eliminando categoría de prueba`);
-            res = await makeRequest('DELETE', `${BASE_URL_CATEGORIES}/${createdCategoryId}`, null, adminToken);
+            res = await makeRequest('DELETE', `${BASE_URLS.categories}/${createdCategoryId}`, null, adminToken);
             if (res.status === 200) {
                 console.log(' ✅ Categoría de Admin eliminada correctamente.');
             } else {
@@ -255,7 +213,7 @@ const runTests = async () => {
 
         if (createdByProviderId) {
             console.log(`[DELETE /api/categories/${createdByProviderId}] Admin eliminando categoría de Provider`);
-            res = await makeRequest('DELETE', `${BASE_URL_CATEGORIES}/${createdByProviderId}`, null, adminToken);
+            res = await makeRequest('DELETE', `${BASE_URLS.categories}/${createdByProviderId}`, null, adminToken);
             if (res.status === 200) {
                 console.log(' ✅ Categoría de Provider eliminada correctamente.');
             } else {

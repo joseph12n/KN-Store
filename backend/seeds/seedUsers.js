@@ -1,9 +1,8 @@
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const User = require('./backend/models/User'); // Ajusta la ruta si es necesario
-const conectarDB = require('./backend/config/db'); // Asumiendo que esta es tu función de conexión
+const User = require('../models/User');
+const conectarDB = require('../config/db');
 
-dotenv.config({ path: './backend/.env' }); // Apuntamos al archivo .env dentro de backend
+dotenv.config({ path: `${__dirname}/../.env` });
 
 const importData = async () => {
   try {

@@ -1,9 +1,8 @@
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const Category = require('./backend/models/Category');
-const conectarDB = require('./backend/config/db');
+const Category = require('../models/Category');
+const conectarDB = require('../config/db');
 
-dotenv.config({ path: './backend/.env' });
+dotenv.config({ path: `${__dirname}/../.env` });
 
 const categories = [
   {
@@ -52,9 +51,7 @@ const importData = async () => {
   try {
     await conectarDB();
 
-    // Elimina categorías existentes para evitar duplicados
     await Category.deleteMany();
-
     await Category.insertMany(categories);
 
     console.log('✅ Categorías importadas exitosamente');
