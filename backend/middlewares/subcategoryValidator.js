@@ -1,99 +1,94 @@
-const { check, validationResult } = require('express-validator');
-
 /**
- * Middleware de validación para Subcategorías
- * 
- * ¿Para qué sirve?
- * ✔ Validar los datos antes de que lleguen al controlador
- * ✔ Evitar datos incorrectos en la base de datos
- * ✔ Mejorar seguridad y consistencia del sistema
+ * Validaciones para el Modelo de Subcategoría
+ *
+ * Utiliza express-validator para asegurar que el nombre,
+ * la descripción y la referencia a la categoría existan y sean válidas.
+ *
+ * @module middlewares/subcategoryValidator
  */
 
-exports.validateSubcategory = [
+const { check, validationResult } = require('express-validator');
 
-    /**
-     * VALIDAR NOMBRE
-     * - No puede estar vacío
-     * - Debe tener mínimo 3 caracteres
-     */
-    check('name')
-        .notEmpty()
-        .withMessage('El nombre de la subcategoría es obligatorio')
+// ==================== REGLAS DE VALIDACIÓN ====================
 
-        .isLength({ min: 3 })
-        .withMessage('El nombre debe tener al menos 3 caracteres'),
+/**
+ * Reglas para la creación de una subcategoría.
+ */
+const subcategoryChecks = [
+  check('name')
+    .trim()
+    .notEmpty().withMessage('El nombre de la subcategoría es obligatorio')
+    .isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
 
-    /**
-     * VALIDAR DESCRIPCIÓN
-     * - No puede estar vacía
-     * - Debe ser más descriptiva (mínimo 5 caracteres)
-     */
-    check('description')
-        .notEmpty()
-        .withMessage('La descripción es obligatoria')
+  check('description')
+    .trim()
+    .notEmpty().withMessage('La descripción es obligatoria')
+    .isLength({ min: 10 }).withMessage('La descripción debe tener al menos 10 caracteres'),
 
-        .isLength({ min: 5 })
-        .withMessage('La descripción debe tener al menos 5 caracteres'),
-
-    /**
-     * VALIDAR CATEGORÍA
-     * - No puede estar vacía
-     * - Debe ser un ID válido de MongoDB
-     */
-    check('category')
-        .notEmpty()
-        .withMessage('Debes seleccionar una categoría')
-
-        .isMongoId()
-        .withMessage('El ID de la categoría no es válido'),
-
-    /**
-     * VALIDACIÓN FINAL
-     * - Revisa si hubo errores en los campos anteriores
-     * - Si hay errores, detiene la petición
-     */
-    (req, res, next) => {
-        const errors = validationResult(req);
-
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                success: false,
-                message: 'Errores de validación',
-                errors: errors.array()
-            });
-        }
-
-        // Si todo está bien, continúa al controlador
-        next();
-    }
+  check('category')
+    .notEmpty().withMessage('La categoría (ID) es obligatoria')
+    .isMongoId().withMessage('El ID de categoría no es válido')
 ];
 
-// Validación para actualización partial (puede incluir sólo uno o varios campos)
-exports.validateSubcategoryUpdate = [
-    check('name')
-        .optional()
-        .isLength({ min: 3 })
-        .withMessage('El nombre debe tener al menos 3 caracteres'),
+/**
+ * Reglas para la actualización de una subcategoría.
+ */
+const subcategoryUpdateChecks = [
+  check('name')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('El nombre no puede estar vacío')
+    .isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
 
-    check('description')
-        .optional()
-        .isLength({ min: 5 })
-        .withMessage('La descripción debe tener al menos 5 caracteres'),
+  check('description')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('La descripción no puede estar vacía')
+    .isLength({ min: 10 }).withMessage('La descripción debe tener al menos 10 caracteres'),
 
-    check('category')
-        .optional()
-        .isMongoId()
-        .withMessage('El ID de la categoría no es válido'),
-
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                success: false,
-                message: 'Errores de validación',
-                errors: errors.array()
-            });
-        }
-        next();
-    }
+  check('category')
+    .optional()
+    .isMongoId().withMessage('El ID de categoría no es válido')
 ];
+
+// ==================== MANEJADOR DE ERRORES ====================
+
+/**
+ * Middleware que evalúa los resultados de express-validator.
+ * @param {Object} req - Objeto de petición Express
+ * @param {Object} res - Objeto de respuesta Express
+ * @param {Function} next - Función next
+ */
+const validateResults = (req, res, next) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    if (errors.array().length === 1) {
+      return res.status(400).json({
+        success: false,
+        message: errors.array()[0].msg
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: 'Errores de validación',
+      errors: errors.array().map(err => ({ field: err.path, message: err.msg }))
+    });
+  }
+
+  next();
+};
+
+// ==================== EXPORTACIÓN ====================
+
+module.exports = {
+  validateCreateSubcategory: [
+    ...subcategoryChecks,
+    validateResults
+  ],
+  validateUpdateSubcategory: [
+    ...subcategoryUpdateChecks,
+    validateResults
+  ]
+};

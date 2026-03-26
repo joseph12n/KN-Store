@@ -1,100 +1,143 @@
+/**
+ * Controlador de Categorías
+ *
+ * Maneja las operaciones CRUD básicas para las categorías de productos.
+ * Retorna respuestas consistentes en formato estructurado.
+ *
+ * @module controllers/categoryController
+ */
+
 const Category = require('../models/Category');
 
-// @desc    Obtener todas las categorías
-// @route   GET /api/categories
-// @access  Public
+// ==================== RUTAS PÚBLICAS ====================
+
+/**
+ * Obtener todas las categorías.
+ * @route GET /api/categories
+ * @access Público
+ */
 const getCategories = async (req, res) => {
   try {
     const categories = await Category.find({});
-    res.json(categories);
+    
+    res.json({
+      success: true,
+      data: categories,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener las categorías', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al obtener las categorías', error: error.message });
   }
 };
 
-// @desc    Obtener una categoría por ID
-// @route   GET /api/categories/:id
-// @access  Public
+/**
+ * Obtener una categoría específica por su ID.
+ * @route GET /api/categories/:id
+ * @access Público
+ */
 const getCategoryById = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
 
     if (category) {
-      res.json(category);
+      res.json({
+        success: true,
+        data: category,
+      });
     } else {
-      res.status(404).json({ message: 'Categoría no encontrada' });
+      res.status(404).json({ success: false, message: 'Categoría no encontrada' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener la categoría', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al obtener la categoría', error: error.message });
   }
 };
 
-// @desc    Crear una nueva categoría
-// @route   POST /api/categories
-// @access  Private/Admin/Provider
-const createCategory = async (req, res) => {
-  const { name, description } = req.body;
+// ==================== RUTAS DE ADMINISTRACIÓN ====================
 
+/**
+ * Crear una nueva categoría.
+ * @route POST /api/categories
+ * @access Privado (Admin / Provider)
+ */
+const createCategory = async (req, res) => {
   try {
+    const { name, description } = req.body;
+
     const categoryExists = await Category.findOne({ name: name.trim() });
 
     if (categoryExists) {
-      return res.status(400).json({ message: 'Ya existe una categoría con ese nombre' });
+      return res.status(400).json({ success: false, message: 'Ya existe una categoría con ese nombre' });
     }
 
     const category = await Category.create({ name, description });
 
     if (category) {
-      res.status(201).json(category);
+      res.status(201).json({
+        success: true,
+        data: category,
+        message: 'Categoría creada correctamente',
+      });
     } else {
-      res.status(400).json({ message: 'Datos de categoría inválidos' });
+      res.status(400).json({ success: false, message: 'Datos de categoría inválidos' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error al crear la categoría', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al crear la categoría', error: error.message });
   }
 };
 
-// @desc    Actualizar una categoría específica
-// @route   PUT /api/categories/:id
-// @access  Private/Admin/Provider
+/**
+ * Actualizar una categoría existente por completo o de manera parcial.
+ * @route PUT /api/categories/:id
+ * @access Privado (Admin / Provider)
+ */
 const updateCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
 
     if (category) {
       category.name = req.body.name || category.name;
-      // Permitir actualizar description (incluso a cadena vacía)
+      
+      // Permitir la actualización de la descripción (incluso si se envía en blanco)
       if (req.body.description !== undefined) {
         category.description = req.body.description;
       }
 
       const updatedCategory = await category.save();
-      res.json(updatedCategory);
+      
+      res.json({
+        success: true,
+        data: updatedCategory,
+        message: 'Categoría actualizada correctamente',
+      });
     } else {
-      res.status(404).json({ message: 'Categoría no encontrada' });
+      res.status(404).json({ success: false, message: 'Categoría no encontrada' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error al actualizar la categoría', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al actualizar la categoría', error: error.message });
   }
 };
 
-// @desc    Eliminar una categoría específica
-// @route   DELETE /api/categories/:id
-// @access  Private/Admin
+/**
+ * Eliminar una categoría por su ID.
+ * Solo puede ser ejecutado por un Admin.
+ * @route DELETE /api/categories/:id
+ * @access Privado (Solo Admin)
+ */
 const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
 
     if (category) {
       await Category.deleteOne({ _id: req.params.id });
-      res.json({ message: 'Categoría eliminada exitosamente' });
+      res.json({ success: true, message: 'Categoría eliminada exitosamente' });
     } else {
-      res.status(404).json({ message: 'Categoría no encontrada' });
+      res.status(404).json({ success: false, message: 'Categoría no encontrada' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error al eliminar la categoría', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al eliminar la categoría', error: error.message });
   }
 };
+
+// ==================== EXPORTACIÓN ====================
 
 module.exports = {
   getCategories,

@@ -1,3 +1,12 @@
+/**
+ * Seed de Subcategorías
+ *
+ * Requiere que la colección de Categorías ya exista, dado
+ * que extrae de ellas el FK relacional para inyectar sub-categorizaciones.
+ *
+ * @module seeds/seedSubcategories
+ */
+
 const dotenv = require('dotenv');
 const Category = require('../models/Category');
 const Subcategory = require('../models/Subcategory');
@@ -12,73 +21,71 @@ const importData = async () => {
     const categories = await Category.find();
 
     if (categories.length === 0) {
-      console.log('⚠️  No hay categorías. Ejecuta primero: npm run seed:categories');
+      console.log('⚠️  Ausencia de categorías en DB. Corre "npm run seed" (All).');
       process.exit(1);
     }
 
-    // Mapa de nombres para ubicar categorías fácilmente
+    // Mapa veloz de nombres a ObjectIds
     const catMap = {};
     categories.forEach(c => { catMap[c.name] = c._id; });
 
-    // Limpiar subcategorías existentes
+    // Limpieza
     await Subcategory.deleteMany();
 
     const subcategories = [
-      // Zapatillas Deportivas
+      // == Zapatillas Deportivas ==
       {
         name: 'Running Hombre',
-        description: 'Zapatillas de running diseñadas para hombre con tecnología de amortiguación avanzada.',
+        description: 'Colección de Running Hombre con alta transpirabilidad y firmeza.',
         category: catMap['Zapatillas Deportivas'] || categories[0]._id,
       },
       {
         name: 'Running Mujer',
-        description: 'Zapatillas de running diseñadas para mujer, ligeras y cómodas para largas distancias.',
+        description: 'Ligeras y cómodas para todo tipo de carreras y rodajes de mujer.',
         category: catMap['Zapatillas Deportivas'] || categories[0]._id,
       },
-      // Zapatos Casuales
+      // == Zapatos Casuales ==
       {
         name: 'Sneakers Urbanos',
-        description: 'Zapatillas casuales de estilo urbano para uso diario.',
+        description: 'Lifestyle urbano unisex. Perfiles ultra bajos casuales.',
         category: catMap['Zapatos Casuales'] || categories[1]._id,
       },
       {
         name: 'Mocasines Casuales',
-        description: 'Calzado sin cordones de estilo casual y cómodo.',
+        description: 'Ideales sin cordones o lazada con cuero/piel sintética o natural.',
         category: catMap['Zapatos Casuales'] || categories[1]._id,
       },
-      // Zapatos Formales
+      // == Zapatos Formales ==
       {
         name: 'Oxfords',
-        description: 'Zapatos clásicos de cordones para ambientes formales y de negocios.',
+        description: 'Modelos de negocios para corbata. Estilo British Oxford.',
         category: catMap['Zapatos Formales'] || categories[2]._id,
       },
-      // Botas
+      // == Botas ==
       {
         name: 'Botas de Montaña',
-        description: 'Botas resistentes para actividades al aire libre y senderismo.',
+        description: 'Trekkers y GORE-TEX para intemperismo en media y alta montaña.',
         category: catMap['Botas'] || categories[3]._id,
       },
-      // Sandalias y Chanclas
+      // == Sandalias y Chanclas ==
       {
         name: 'Sandalias de Playa',
-        description: 'Sandalias ligeras y resistentes al agua, perfectas para la playa.',
+        description: 'Sliders ligeras. Goma EVA sumergible y ergonómica.',
         category: catMap['Sandalias y Chanclas'] || categories[4]._id,
       },
     ];
 
-    for (const sub of subcategories) {
-      await Subcategory.create(sub);
-    }
+    await Subcategory.insertMany(subcategories);
 
-    console.log('✅ Subcategorías importadas exitosamente');
+    console.log('✅ Subcategorías injertadas de manera relacional perfecta.');
     console.table(subcategories.map(s => ({
       Subcategoría: s.name,
-      Categoría: Object.keys(catMap).find(k => catMap[k].toString() === s.category.toString()) || 'N/A',
+      Categoría_Madre: Object.keys(catMap).find(k => catMap[k].toString() === s.category.toString()) || 'Unknown',
     })));
     process.exit();
 
   } catch (error) {
-    console.error(`❌ Error al importar subcategorías: ${error.message}`);
+    console.error(`❌ Falla en Subcategorización inicial: ${error.message}`);
     process.exit(1);
   }
 };

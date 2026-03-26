@@ -1,50 +1,65 @@
+/**
+ * Rutas de Usuarios
+ *
+ * Define los endpoints para registro, autenticación y gestión 
+ * de perfiles y usuarios. Implementa middleware de validación pre-controlador
+ * y middleware de protección/roles.
+ *
+ * @module routes/userRoutes
+ */
+
 const express = require('express');
 const router = express.Router();
 
+// ==================== CONTROLADORES ====================
 const {
   loginUser,
   registerClient,
+  logoutUser,
   getUserProfile,
   deleteProfile,
   getUsers,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
 } = require('../controllers/userController');
 
+// ==================== MIDDLEWARES ====================
 const { protect, authorizeRoles } = require('../middlewares/authMiddleware');
 const {
   validateRegister,
   validateLogin,
   validateCreateUser,
-  validateUpdateUser
+  validateUpdateUser,
 } = require('../middlewares/userValidator');
 
-// ==========================================
-// RUTAS PÚBLICAS
-// ==========================================
+// ==================== RUTAS PÚBLICAS ====================
 router.post('/login', validateLogin, loginUser);
 router.post('/register', validateRegister, registerClient);
 
-// ==========================================
-// RUTAS PRIVADAS (Requieren Token)
-// ==========================================
+// ==================== RUTAS PRIVADAS (Requieren Autenticación) ====================
 
-// --- Perfil propio (Cualquier rol - Especialmente Cliente) ---
+// --- Manejo de la sesión actual ---
+router.post('/logout', protect, logoutUser);
+
+// --- Perfil propio ---
 router.route('/profile')
   .get(protect, getUserProfile)
   .delete(protect, deleteProfile);
 
-// --- Rutas de Administración ---
-// Obtener todos y crear usuario interno (Admins y Providers)
+// ==================== RUTAS DE ADMINISTRACIÓN (Requerido: Admin) ====================
+
+// Aplicar protección y verificación a todas las rutas debajo
+router.use(protect);
+router.use(authorizeRoles('Admin'));
+
 router.route('/')
-  .get(protect, authorizeRoles('Admin', 'Provider'), getUsers)
-  .post(protect, authorizeRoles('Admin', 'Provider'), validateCreateUser, createUser);
+  .get(getUsers)
+  .post(validateCreateUser, createUser);
 
-// Actualizar usuario específico
 router.route('/:id')
-  .put(protect, authorizeRoles('Admin', 'Provider'), validateUpdateUser, updateUser)
-  // Eliminar usuario específico (Solo Admin)
-  .delete(protect, authorizeRoles('Admin'), deleteUser);
+  .put(validateUpdateUser, updateUser)
+  .delete(deleteUser);
 
+// ==================== EXPORTACIÓN ====================
 module.exports = router;

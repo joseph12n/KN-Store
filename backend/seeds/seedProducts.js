@@ -1,11 +1,16 @@
-const dotenv = require('dotenv');
+/**
+ * Seed de Productos
+ *
+ * Popula el catálogo base de la tienda virtual, inyectando dependencias
+ * relacionales desde Categorías y Subcategorías vigentes.
+ *
+ * @module seeds/seedProducts
+ */
 
-// Modelos
+const dotenv = require('dotenv');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Subcategory = require('../models/Subcategory');
-
-// Conexión
 const conectarDB = require('../config/db');
 
 dotenv.config({ path: `${__dirname}/../.env` });
@@ -13,38 +18,31 @@ dotenv.config({ path: `${__dirname}/../.env` });
 const importData = async () => {
   try {
     await conectarDB();
+    console.log('🌱 Cargando catálogo de productos maestros...');
 
-    console.log('🌱 Cargando productos...');
+    const [categories, subcategories] = await Promise.all([
+      Category.find(),
+      Subcategory.find()
+    ]);
 
-    // Obtener categorías existentes
-    const categories = await Category.find();
-
-    if (categories.length === 0) {
-      console.log('⚠️ No hay categorías, ejecuta primero: npm run seed:categories');
-      process.exit();
+    if (!categories.length || !subcategories.length) {
+      console.log('⚠️ Requisitos insuficientes (Faltan Cat/Sub). Ejecuta: npm run seed');
+      process.exit(1);
     }
 
-    // Obtener subcategorías existentes
-    const subcategories = await Subcategory.find();
-
-    if (subcategories.length === 0) {
-      console.log('⚠️ No hay subcategorías, ejecuta primero: npm run seed:subcategories');
-      process.exit();
-    }
-
-    // Limpiar productos
+    // Limpieza
     await Product.deleteMany();
 
-    // Crear productos con todos los campos nuevos
     const products = [
       {
         name: 'Nike Air Max 90',
         sku: 'NIKE-AM90-BLK-001',
-        description: 'Zapatillas de running con tecnología Air Max de última generación, diseñadas para máxima comodidad y rendimiento en cada paso',
+        description: 'Zapatillas de running con tecnología Air Max de última generación.',
         brand: 'Nike',
         price: 129.99,
         costPrice: 79.99,
         stock: 50,
+        size: 'N/A',
         tags: ['running', 'deportivas', 'tecnología'],
         category: categories[0]._id,
         subcategory: subcategories[0]._id,
@@ -65,11 +63,12 @@ const importData = async () => {
       {
         name: 'Adidas Superstar',
         sku: 'ADIDAS-SS-WHT-002',
-        description: 'Clásicas zapatillas Adidas Superstar, ideales para el uso casual diario con estilo legendario y comodidad inigualable',
+        description: 'Clásicas zapatillas Adidas Superstar, estilo legendario.',
         brand: 'Adidas',
         price: 99.99,
         costPrice: 60.00,
         stock: 75,
+        size: 'N/A',
         tags: ['casual', 'clásico', 'urbano'],
         category: categories[1]._id,
         subcategory: subcategories[1]._id,
@@ -89,13 +88,14 @@ const importData = async () => {
       {
         name: 'Puma RS-X',
         sku: 'PUMA-RSX-RED-003',
-        description: 'Zapatillas modernas Puma RS-X con diseño retro futurista, perfectas para el estilo urbano y la comodidad absoluta',
+        description: 'Zapatillas retro futuristas Puma RS-X.',
         brand: 'Puma',
         price: 119.99,
         costPrice: 70.00,
         stock: 45,
+        size: 'N/A',
         tags: ['moderno', 'urbano', 'tendencia'],
-        category: categories[1]._id,
+        category: categories[1]._id, // Asume que ID1 es calzado casual
         subcategory: subcategories[1]._id,
         discount: null,
         variants: [
@@ -109,13 +109,14 @@ const importData = async () => {
       {
         name: 'New Balance 574',
         sku: 'NB-574-GRY-004',
-        description: 'Zapatillas New Balance 574 con amplia compatibilidad de talles y colores para toda la familia, comodidad garantizada',
+        description: 'Clásicas deportivas de New Balance.',
         brand: 'New Balance',
         price: 109.99,
         costPrice: 65.00,
         stock: 60,
+        size: 'N/A',
         tags: ['familiar', 'cómodo', 'versátil'],
-        category: categories[0]._id,
+        category: categories[0]._id, // Asume running o deporte
         subcategory: subcategories[0]._id,
         discount: {
           percentage: 5,
@@ -132,13 +133,14 @@ const importData = async () => {
       {
         name: 'Converse Chuck Taylor',
         sku: 'CONV-CT-BLK-005',
-        description: 'Icónicas zapatillas Converse Chuck Taylor, clásicas y versátiles para cualquier ocasión casual con máximo estilo',
+        description: 'Botines / sneakers de caña alta Converse originales.',
         brand: 'Converse',
         price: 69.99,
         costPrice: 40.00,
         stock: 100,
+        size: 'N/A',
         tags: ['clásico', 'lona', 'versátil'],
-        category: categories[1]._id,
+        category: categories[1]._id, // Casual
         subcategory: subcategories[1]._id || subcategories[0]._id,
         discount: null,
         variants: [
@@ -152,13 +154,14 @@ const importData = async () => {
       {
         name: 'Nike React Infinity',
         sku: 'NIKE-RIN-BLU-006',
-        description: 'Tecnología React NextGen ofrece comodidad y respuesta excepcionales para runners exigentes que buscan lo mejor',
+        description: 'React NextGen previene esguinces y fascitis plantar con alto rebote.',
         brand: 'Nike',
         price: 159.99,
         costPrice: 95.00,
         stock: 30,
+        size: 'N/A',
         tags: ['premium', 'running', 'tecnología'],
-        category: categories[0]._id,
+        category: categories[0]._id, // Deporte
         subcategory: subcategories[0]._id,
         discount: null,
         variants: [
@@ -172,15 +175,14 @@ const importData = async () => {
       }
     ];
 
-    // Insertar en BD (usando save() para que se ejecuten los middlewares pre-save, como la generación del slug)
-    for (const productData of products) {
-      const product = new Product(productData);
-      await product.save();
+    // Iteramos e inyectamos individualmente para aplicar middlewares pre-save de mongoose (.slug)
+    for (const prodData of products) {
+      const p = new Product(prodData);
+      await p.save();
     }
 
-    console.log('✅ Productos importados exitosamente');
+    console.log('✅ Portafolio comercial importado al milímetro');
 
-    // Mostrar en tabla
     console.table(
       products.map(p => ({
         'Producto': p.name,
@@ -188,14 +190,13 @@ const importData = async () => {
         'Precio': `$${p.price}`,
         'Stock': p.stock,
         'Marca': p.brand,
-        'Descuento': p.discount?.percentage ? `${p.discount.percentage}%` : 'No'
+        'Descuento': p.discount?.percentage ? `${p.discount.percentage}%` : 'N/A'
       }))
     );
 
     process.exit();
-
   } catch (error) {
-    console.error(`❌ Error al importar productos: ${error.message}`);
+    console.error(`❌ Falla en la inyección de Productos Maestros: ${error.message}`);
     process.exit(1);
   }
 };

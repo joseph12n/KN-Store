@@ -1,538 +1,337 @@
+/**
+ * Controlador de Productos
+ *
+ * Maneja el ciclo de vida completo de un producto en el sistema,
+ * además de proveer opciones de paginado, búsqueda por slug
+ * o text search avanzado, y filtros condicionales.
+ *
+ * @module controllers/productController
+ */
+
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Subcategory = require('../models/Subcategory');
 
-// ==================== CREAR ====================
+// ==================== RUTAS DE LECTURA (PÚBLICAS) ====================
 
-exports.createProduct = async (req, res) => {
-    try {
-        const { name, sku, description, brand, price, costPrice, stock, category, subcategory, variants, images, tags, discount, isAvailable, availableDate } = req.body;
+/**
+ * Obtener productos listados (con filtrado y paginación condicional).
+ * @route GET /api/products
+ * @access Público
+ */
+const getProducts = async (req, res) => {
+  try {
+    // ---- 1. Configuración de paginación ----
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 12;
+    const skip = (page - 1) * limit;
 
-        // Validar que la categoría existe
-        const categoryExists = await Category.findById(category);
-        if (!categoryExists) {
-            return res.status(404).json({
-                success: false,
-                message: 'La categoría no existe'
-            });
-        }
+    // Solo devolver productos activos y disponibles
+    let filter = { active: true, isAvailable: true };
 
-        // Validar que la subcategoría existe
-        const subcategoryExists = await Subcategory.findById(subcategory);
-        if (!subcategoryExists) {
-            return res.status(404).json({
-                success: false,
-                message: 'La subcategoría no existe'
-            });
-        }
-
-        // Validar que la subcategoría pertenece a la categoría
-        if (subcategoryExists.category.toString() !== category) {
-            return res.status(400).json({
-                success: false,
-                message: 'La subcategoría no pertenece a la categoría seleccionada'
-            });
-        }
-
-        // Crear el producto
-        const newProduct = new Product({
-            name: name.trim(),
-            sku: sku.toUpperCase(),
-            description: description.trim(),
-            brand,
-            price,
-            costPrice,
-            stock,
-            category,
-            subcategory,
-            variants: variants || [],
-            images: images || [],
-            tags: tags || [],
-            discount: discount || {},
-            isAvailable: isAvailable !== undefined ? isAvailable : true,
-            availableDate
-        });
-
-        await newProduct.save();
-
-        // Populate de referencias
-        await newProduct.populate('category', 'name');
-        await newProduct.populate('subcategory', 'name');
-
-        res.status(201).json({
-            success: true,
-            message: 'Producto creado correctamente',
-            data: newProduct
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al crear producto',
-            error: error.message
-        });
+    // ---- 2. Búsqueda de texto (search text) ----
+    if (req.query.q) {
+      filter.$text = { $search: req.query.q };
     }
+
+    // ---- 3. Filtrado por Stock ----
+    if (req.query.inStock === 'true') {
+      filter.stock = { $gt: 0 };
+    }
+
+    // ---- 4. Filtrado por rango de Precio ----
+    if (req.query.priceMin || req.query.priceMax) {
+      filter.price = {};
+      if (req.query.priceMin) filter.price.$gte = Number(req.query.priceMin);
+      if (req.query.priceMax) filter.price.$lte = Number(req.query.priceMax);
+    }
+
+    // ---- 5. Ordenamiento ----
+    let sortObj = { createdAt: -1 };
+    if (req.query.sortBy) {
+      const parts = req.query.sortBy.split(':');
+      sortObj[parts[0]] = parts[1] === 'desc' ? -1 : 1;
+    }
+
+    // ---- 6. Ejecución de la consulta en BD ----
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .populate('category', 'name')
+        .populate('subcategory', 'name')
+        .populate('provider', 'name email')
+        .sort(sortObj)
+        .limit(limit)
+        .skip(skip),
+      Product.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+      data: products,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al listar los productos', error: error.message });
+  }
 };
 
-// ==================== LEER/OBTENER ====================
+/**
+ * Obtener un producto en específico por su ObjectID.
+ * @route GET /api/products/:id
+ * @access Público
+ */
+const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate('category', 'name')
+      .populate('subcategory', 'name')
+      .populate('provider', 'name email');
 
-exports.getProducts = async (req, res) => {
-    try {
-        const {
-            page = 1,
-            limit = 10,
-            sort = '-createdAt',
-            priceMin,
-            priceMax,
-            inStock,
-            tags,
-            brand,
-            q,
-            includeInactive = false
-        } = req.query;
-
-        // Construir filtro
-        let filter = includeInactive ? {} : { active: true, isAvailable: true };
-
-        // Filtro de rango de precios
-        if (priceMin || priceMax) {
-            filter.price = {};
-            if (priceMin) filter.price.$gte = parseFloat(priceMin);
-            if (priceMax) filter.price.$lte = parseFloat(priceMax);
-        }
-
-        // Filtro de stock
-        if (inStock === 'true') {
-            filter.stock = { $gt: 0 };
-        }
-
-        // Filtro de tags
-        if (tags) {
-            const tagArray = tags.split(',').map(t => t.trim());
-            filter.tags = { $in: tagArray };
-        }
-
-        // Filtro de marca
-        if (brand) {
-            filter.brand = brand;
-        }
-
-        // Búsqueda de texto (nombre y descripción)
-        if (q) {
-            filter.$or = [
-                { name: { $regex: q, $options: 'i' } },
-                { description: { $regex: q, $options: 'i' } },
-                { sku: { $regex: q, $options: 'i' } }
-            ];
-        }
-
-        // Convertir sort query a formato Mongoose
-        const sortObj = {};
-        const sortFields = sort.split(',');
-        sortFields.forEach(field => {
-            if (field.startsWith('-')) {
-                sortObj[field.substring(1)] = -1;
-            } else {
-                sortObj[field] = 1;
-            }
-        });
-
-        // Calcular paginación
-        const pageNum = Math.max(1, parseInt(page));
-        const pageSize = Math.max(1, Math.min(100, parseInt(limit)));
-        const skip = (pageNum - 1) * pageSize;
-
-        // Ejecutar queries en paralelo
-        const [products, total] = await Promise.all([
-            Product.find(filter)
-                .populate('category', 'name')
-                .populate('subcategory', 'name')
-                .sort(sortObj)
-                .limit(pageSize)
-                .skip(skip),
-            Product.countDocuments(filter)
-        ]);
-
-        const pages = Math.ceil(total / pageSize);
-
-        res.status(200).json({
-            success: true,
-            data: products,
-            pagination: {
-                total,
-                page: pageNum,
-                pages,
-                limit: pageSize,
-                hasNext: pageNum < pages,
-                hasPrev: pageNum > 1
-            }
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener productos'
-        });
+    if (!product || !product.active) {
+      return res.status(404).json({ success: false, message: 'Producto no hallado u oculto en el sistema' });
     }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(404).json({ success: false, message: 'Identificador del producto no es correcto' });
+    }
+    res.status(500).json({ success: false, message: 'Error interno en el servidor', error: error.message });
+  }
 };
 
-exports.getProductById = async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id)
-            .populate('category', 'name')
-            .populate('subcategory', 'name');
+/**
+ * Obtener un producto mediante un slug (URL human friendly).
+ * @route GET /api/products/slug/:slug
+ * @access Público
+ */
+const getProductBySlug = async (req, res) => {
+  try {
+    const product = await Product.findOne({ slug: req.params.slug, active: true })
+      .populate('category', 'name')
+      .populate('subcategory', 'name')
+      .populate('provider', 'name email');
 
-        if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Producto no encontrado'
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            data: product
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener producto'
-        });
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Producto inexistente' });
     }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error procesando la solicitud', error: error.message });
+  }
 };
 
-exports.getProductBySlug = async (req, res) => {
-    try {
-        const product = await Product.findOne({ slug: req.params.slug, active: true })
-            .populate('category', 'name')
-            .populate('subcategory', 'name');
+// ==================== RUTAS DE FILTRADO RELACIONAL ====================
 
-        if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Producto no encontrado'
-            });
-        }
+/**
+ * Reutiliza código común para retornar resultados filtrados.
+ */
+const getUsersByProperty = async (propertyObj, res) => {
+  try {
+    const products = await Product.find({ ...propertyObj, active: true, isAvailable: true })
+      .populate('category', 'name')
+      .populate('subcategory', 'name');
 
-        res.status(200).json({
-            success: true,
-            data: product
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener producto'
-        });
-    }
+    res.status(200).json({ success: true, data: products });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al procesar filtrado', error: error.message });
+  }
 };
 
-exports.getProductsByBrand = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, sort = '-createdAt' } = req.query;
+/**
+ * Extraer todos los productos adjuntos a una Categoría.
+ * @route GET /api/products/category/:categoryId
+ */
+const getProductsByCategory = (req, res) => getUsersByProperty({ category: req.params.categoryId }, res);
 
-        const pageNum = Math.max(1, parseInt(page));
-        const pageSize = Math.max(1, Math.min(100, parseInt(limit)));
-        const skip = (pageNum - 1) * pageSize;
+/**
+ * Extraer todos los productos adjuntos a una Subcategoría.
+ * @route GET /api/products/subcategory/:subcategoryId
+ */
+const getProductsBySubcategory = (req, res) => getUsersByProperty({ subcategory: req.params.subcategoryId }, res);
 
-        const [products, total] = await Promise.all([
-            Product.find({ brand: req.params.brand, active: true })
-                .populate('category', 'name')
-                .populate('subcategory', 'name')
-                .sort(sort)
-                .limit(pageSize)
-                .skip(skip),
-            Product.countDocuments({ brand: req.params.brand, active: true })
-        ]);
+/**
+ * Extraer todos los productos pertenecientes a una misma Marca.
+ * @route GET /api/products/brand/:brand
+ */
+const getProductsByBrand = (req, res) => getUsersByProperty({ brand: req.params.brand }, res);
 
-        const pages = Math.ceil(total / pageSize);
+/**
+ * Extraer todos los productos de una etiqueta especial.
+ * @route GET /api/products/tags/:tag
+ */
+const getProductsByTag = (req, res) => getUsersByProperty({ tags: req.params.tag }, res);
 
-        res.status(200).json({
-            success: true,
-            data: products,
-            pagination: {
-                total,
-                page: pageNum,
-                pages,
-                limit: pageSize,
-                hasNext: pageNum < pages,
-                hasPrev: pageNum > 1
-            }
-        });
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener productos por marca'
-        });
+// ==================== RUTAS DE ADMINISTRACIÓN (ESCRITURA) ====================
+
+/**
+ * Registra y almacena un nuevo producto.
+ * @route POST /api/products
+ * @access Privado (Admin / Provider)
+ */
+const createProduct = async (req, res) => {
+  try {
+    const { 
+      name, sku, description, brand, size, price, costPrice, stock, 
+      category, subcategory, provider, variants, 
+      images, tags, discount, isAvailable, availableDate 
+    } = req.body;
+
+    // Constatar que la categoría y la subcategoría designadas existan
+    const [catExists, subExists] = await Promise.all([
+      Category.findById(category),
+      Subcategory.findById(subcategory)
+    ]);
+
+    if (!catExists) return res.status(404).json({ success: false, message: 'La categoría no existe en el sistema' });
+    if (!subExists) return res.status(404).json({ success: false, message: 'La subcategoría referenciada no existe' });
+
+    const newProduct = new Product({
+      name: name.trim(),
+      sku: sku.toUpperCase(),
+      description: description.trim(),
+      brand,
+      size,
+      price,
+      costPrice,
+      stock,
+      category,
+      subcategory,
+      provider,
+      variants: variants || [],
+      images: images || [],
+      tags: tags || [],
+      discount: discount || {},
+      isAvailable: isAvailable !== undefined ? isAvailable : true,
+      availableDate
+    });
+
+    await newProduct.save();
+
+    await newProduct.populate('category', 'name');
+    await newProduct.populate('subcategory', 'name');
+    await newProduct.populate('provider', 'name email');
+
+    res.status(201).json({ success: true, data: newProduct, message: 'Producto guardado correctamente' });
+  } catch (error) {
+    if (error.message.includes('ya existe en la base de datos')) {
+      return res.status(400).json({ success: false, message: error.message });
     }
+    res.status(500).json({ success: false, message: 'Error interno en servidor', error: error.message });
+  }
 };
 
-exports.getProductsByTag = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, sort = '-createdAt' } = req.query;
+/**
+ * Parchea o modifica los detalles de un producto.
+ * @route PUT /api/products/:id
+ * @access Privado (Admin / Provider)
+ */
+const updateProduct = async (req, res) => {
+  try {
+    const { 
+      name, sku, description, brand, size, price, costPrice, stock, 
+      category, subcategory, provider, variants, images, tags, discount, 
+      isAvailable, availableDate 
+    } = req.body;
 
-        const pageNum = Math.max(1, parseInt(page));
-        const pageSize = Math.max(1, Math.min(100, parseInt(limit)));
-        const skip = (pageNum - 1) * pageSize;
-
-        const [products, total] = await Promise.all([
-            Product.find({ tags: req.params.tag, active: true })
-                .populate('category', 'name')
-                .populate('subcategory', 'name')
-                .sort(sort)
-                .limit(pageSize)
-                .skip(skip),
-            Product.countDocuments({ tags: req.params.tag, active: true })
-        ]);
-
-        const pages = Math.ceil(total / pageSize);
-
-        res.status(200).json({
-            success: true,
-            data: products,
-            pagination: {
-                total,
-                page: pageNum,
-                pages,
-                limit: pageSize,
-                hasNext: pageNum < pages,
-                hasPrev: pageNum > 1
-            }
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener productos por etiqueta'
-        });
+    if (category) {
+      const categoryExists = await Category.findById(category);
+      if (!categoryExists) return res.status(404).json({ success: false, message: 'Categoría indicada ausente' });
     }
+
+    if (subcategory) {
+      const subcategoryExists = await Subcategory.findById(subcategory);
+      if (!subcategoryExists) return res.status(404).json({ success: false, message: 'Subcategoría indicada ausente' });
+    }
+
+    // Constatamos un parche dinámico para evitar sobreescritura vacía
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (sku) updateData.sku = sku.toUpperCase();
+    if (description) updateData.description = description.trim();
+    if (brand) updateData.brand = brand;
+    if (size !== undefined) updateData.size = size;
+    if (price !== undefined) updateData.price = price;
+    if (costPrice !== undefined) updateData.costPrice = costPrice;
+    if (stock !== undefined) updateData.stock = stock;
+    if (category) updateData.category = category;
+    if (subcategory) updateData.subcategory = subcategory;
+    if (provider !== undefined) updateData.provider = provider;
+    if (variants !== undefined) updateData.variants = variants;
+    if (images !== undefined) updateData.images = images;
+    if (tags !== undefined) updateData.tags = tags;
+    if (discount !== undefined) updateData.discount = discount;
+    if (isAvailable !== undefined) updateData.isAvailable = isAvailable;
+    if (availableDate !== undefined) updateData.availableDate = availableDate;
+
+    // Ejecutamos parcheo validando integridades
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id, 
+      updateData, 
+      { new: true, runValidators: true }
+    )
+    .populate('category', 'name')
+    .populate('subcategory', 'name')
+    .populate('provider', 'name email');
+
+    if (!updatedProduct) return res.status(404).json({ success: false, message: 'El producto actual no fue encontrado en BD' });
+
+    res.status(200).json({ success: true, data: updatedProduct, message: 'Refactorizado en BD satisfactoriamente' });
+  } catch (error) {
+    if (error.code === 11000) return res.status(400).json({ success: false, message: 'Colisión de atributos de ID/Slug' });
+    res.status(500).json({ success: false, message: 'Falla al procesar transacciones', error: error.message });
+  }
 };
 
-exports.getProductsBySubcategory = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, sort = '-createdAt', includeInactive = false } = req.query;
+/**
+ * Erradica a un producto del sistema. Soporta flag soft/hard-delete ?hardDelete=true.
+ * @route DELETE /api/products/:id
+ * @access Privado (Admin Only)
+ */
+const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
 
-        const pageNum = Math.max(1, parseInt(page));
-        const pageSize = Math.max(1, Math.min(100, parseInt(limit)));
-        const skip = (pageNum - 1) * pageSize;
-
-        const filter = {
-            subcategory: req.params.id,
-            ...(includeInactive ? {} : { active: true })
-        };
-
-        const [products, total] = await Promise.all([
-            Product.find(filter)
-                .populate('category', 'name')
-                .populate('subcategory', 'name')
-                .sort(sort)
-                .limit(pageSize)
-                .skip(skip),
-            Product.countDocuments(filter)
-        ]);
-
-        const pages = Math.ceil(total / pageSize);
-
-        res.status(200).json({
-            success: true,
-            data: products,
-            pagination: {
-                total,
-                page: pageNum,
-                pages,
-                limit: pageSize,
-                hasNext: pageNum < pages,
-                hasPrev: pageNum > 1
-            }
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener productos de la subcategoría'
-        });
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Producto ausente/inexistente' });
     }
+
+    if (req.query.hardDelete === 'true') {
+      await product.deleteOne();
+      return res.status(200).json({ success: true, message: 'Registro purgado permanentemente' });
+    }
+
+    product.active = false;
+    await product.save();
+
+    res.status(200).json({ success: true, message: 'Exclusión temporal aplicada sin destruir logs de transacciones' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Deficiencia en backend o Mongoose', error: error.message });
+  }
 };
 
-exports.getProductsByCategory = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, sort = '-createdAt', includeInactive = false } = req.query;
+// ==================== EXPORTACIÓN ====================
 
-        const pageNum = Math.max(1, parseInt(page));
-        const pageSize = Math.max(1, Math.min(100, parseInt(limit)));
-        const skip = (pageNum - 1) * pageSize;
-
-        const filter = {
-            category: req.params.id,
-            ...(includeInactive ? {} : { active: true })
-        };
-
-        const [products, total] = await Promise.all([
-            Product.find(filter)
-                .populate('category', 'name')
-                .populate('subcategory', 'name')
-                .sort(sort)
-                .limit(pageSize)
-                .skip(skip),
-            Product.countDocuments(filter)
-        ]);
-
-        const pages = Math.ceil(total / pageSize);
-
-        res.status(200).json({
-            success: true,
-            data: products,
-            pagination: {
-                total,
-                page: pageNum,
-                pages,
-                limit: pageSize,
-                hasNext: pageNum < pages,
-                hasPrev: pageNum > 1
-            }
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener productos de la categoría'
-        });
-    }
-};
-
-// ==================== ACTUALIZAR ====================
-
-exports.updateProduct = async (req, res) => {
-    try {
-        const { name, sku, description, brand, price, costPrice, stock, category, subcategory, variants, images, tags, discount, isAvailable, availableDate } = req.body;
-
-        // Validar que la categoría existe si se proporciona
-        if (category) {
-            const categoryExists = await Category.findById(category);
-            if (!categoryExists) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'La categoría no existe'
-                });
-            }
-        }
-
-        // Validar que la subcategoría existe si se proporciona
-        if (subcategory) {
-            const subcategoryExists = await Subcategory.findById(subcategory);
-            if (!subcategoryExists) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'La subcategoría no existe'
-                });
-            }
-
-            if (category && subcategoryExists.category.toString() !== category) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'La subcategoría no pertenece a la categoría seleccionada'
-                });
-            }
-        }
-
-        // Preparar objeto de actualización
-        const updateData = {};
-        if (name) updateData.name = name.trim();
-        if (sku) updateData.sku = sku.toUpperCase();
-        if (description) updateData.description = description.trim();
-        if (brand) updateData.brand = brand;
-        if (price !== undefined) updateData.price = price;
-        if (costPrice !== undefined) updateData.costPrice = costPrice;
-        if (stock !== undefined) updateData.stock = stock;
-        if (category) updateData.category = category;
-        if (subcategory) updateData.subcategory = subcategory;
-        if (variants !== undefined) updateData.variants = variants;
-        if (images !== undefined) updateData.images = images;
-        if (tags !== undefined) updateData.tags = tags;
-        if (discount !== undefined) updateData.discount = discount;
-        if (isAvailable !== undefined) updateData.isAvailable = isAvailable;
-        if (availableDate !== undefined) updateData.availableDate = availableDate;
-
-        const updatedProduct = await Product.findByIdAndUpdate(
-            req.params.id,
-            updateData,
-            { new: true, runValidators: true }
-        )
-            .populate('category', 'name')
-            .populate('subcategory', 'name');
-
-        if (!updatedProduct) {
-            return res.status(404).json({
-                success: false,
-                message: 'Producto no encontrado'
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            message: 'Producto actualizado correctamente',
-            data: updatedProduct
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al actualizar producto',
-            error: error.message
-        });
-    }
-};
-
-// ==================== ELIMINAR ====================
-
-exports.deleteProduct = async (req, res) => {
-    try {
-        const { hardDelete } = req.query;
-
-        const product = await Product.findById(req.params.id);
-
-        if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Producto no encontrado'
-            });
-        }
-
-        if (hardDelete === 'true') {
-            // Hard delete - eliminación permanente
-            await Product.findByIdAndDelete(req.params.id);
-
-            return res.status(200).json({
-                success: true,
-                message: 'Producto eliminado permanentemente'
-            });
-        }
-
-        // Soft delete - solo desactivar
-        product.active = false;
-        await product.save();
-
-        res.status(200).json({
-            success: true,
-            message: 'Producto desactivado'
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al eliminar producto'
-        });
-    }
+module.exports = {
+  getProducts,
+  getProductById,
+  getProductBySlug,
+  getProductsByCategory,
+  getProductsBySubcategory,
+  getProductsByBrand,
+  getProductsByTag,
+  createProduct,
+  updateProduct,
+  deleteProduct,
 };

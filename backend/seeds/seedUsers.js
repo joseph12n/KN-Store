@@ -1,49 +1,63 @@
+/**
+ * Seed de Usuarios
+ *
+ * Purga e inserta la tabla de Usuarios (Admin, Provider y Client)
+ * para realizar simulaciones y pruebas locales de forma correcta.
+ *
+ * @module seeds/seedUsers
+ */
+
 const dotenv = require('dotenv');
 const User = require('../models/User');
 const conectarDB = require('../config/db');
 
+// Configuración de entorno
 dotenv.config({ path: `${__dirname}/../.env` });
 
 const importData = async () => {
   try {
+    // 1. Conexión MongoDB
     await conectarDB();
 
-    // Limpiamos los usuarios existentes para evitar duplicados en pruebas
+    // 2. Erradicación previa de colección
     await User.deleteMany();
 
+    // 3. Declaración estructural
     const users = [
       {
-        name: 'Administrador Principal',
+        name: 'Administrador',
+        last_name: 'Principal',
         email: 'admin@knstore.com',
         password: 'password123',
         role: 'Admin',
       },
       {
-        name: 'Proveedor Externo',
+        name: 'Proveedor',
+        last_name: 'Externo',
         email: 'proveedor@knstore.com',
         password: 'password123',
         role: 'Provider',
       },
       {
-        name: 'Cliente Regular',
+        name: 'Cliente',
+        last_name: 'Regular',
         email: 'cliente@gmail.com',
         password: 'password123',
         role: 'Client',
       },
     ];
 
-    // Insertamos los usuarios (usamos create para ejecutar middleware de hash)
+    // 4. Inserción (Se usa create para que pre-save encripte cada constraseña dinámicamente)
     for (const userData of users) {
       await User.create(userData);
     }
 
-    console.log('✅ Usuarios Iniciales Importados Exitosamente');
-    console.log('--- Credenciales de Prueba ---');
-    console.table(users.map(u => ({ Rol: u.role, Email: u.email, Password: u.password })));
-    process.exit();
+    console.log('✅ Usuarios estáticos creados. Lista:');
+    console.table(users.map(u => ({ Rol: u.role, Correo: u.email })));
 
+    process.exit();
   } catch (error) {
-    console.error(`❌ Error al importar datos: ${error.message}`);
+    console.error(`❌ Error importando usuarios temporales: ${error.message}`);
     process.exit(1);
   }
 };

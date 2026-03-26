@@ -20,7 +20,9 @@
                 "controllers": "Usa camelCase (ej: productController.js). Solo orquestación de req/res. La lógica pesada debe ser delegada.",
                 "routes": "Usa camelCase (ej: productRoutes.js). Agrupa rutas por entidad y usa verbos REST correctos.",
                 "middlewares": "Usa camelCase. Aquí deben vivir las validaciones (Joi/Zod) y la lógica de autenticación.",
-                "utils": "Funciones puras y reutilizables como generación de tokens o formateo de fechas."
+                "utils": "Funciones puras y reutilizables como generación de tokens o formateo de fechas.",
+                "seeds": "Usa camelCase con prefijo 'seed' (ej: seedProducts.js). Scripts para poblar la base de datos con datos iniciales.",
+                "tests": "Estructura: tests/test<Modulo>Module.js (ej: testProductsModule.js). Los helpers de test van en tests/helpers/."
             }
         },
         {
@@ -43,7 +45,7 @@
             "naming_conventions": {
                 "functions": "camelCase descriptivo (ej: getProductById en lugar de getProd).",
                 "variables": "Nombres claros que representen el contenido (ej: activeUsers en lugar de list).",
-                "files": "Deben coincidir exactamente con la estructura visual del proyecto backend."
+                "files": "Estructura estricta: Models (PascalCase), Controllers/Routes/Middlewares (camelCase), Seeds (prefix 'seed'), Tests (test<Name>Module.js)."
             }
         }
     ],

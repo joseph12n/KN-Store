@@ -1,98 +1,58 @@
 /**
  * Rutas de Productos
  *
- * Maneja endpoints CRUD para productos con características avanzadas:
- * - Búsqueda y filtrado
- * - Paginación
- * - Ordenamiento
- * - Descuentos y disponibilidad
+ * Módulo complejo compuesto por filtros avanzados, 
+ * extracción de dependencias relacionales y validación estricta de variables en express-validator.
+ *
+ * @module routes/productRoutes
  */
 
 const express = require('express');
 const router = express.Router();
 
-// Controllers
-const productController = require('../controllers/productController');
+// ==================== CONTROLADORES ====================
+const {
+  getProducts,
+  getProductById,
+  getProductBySlug,
+  getProductsByCategory,
+  getProductsBySubcategory,
+  getProductsByBrand,
+  getProductsByTag,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} = require('../controllers/productController');
 
-// Middlewares
+// ==================== MIDDLEWARES ====================
 const { protect, authorizeRoles } = require('../middlewares/authMiddleware');
-const { validateProduct, validateProductUpdate } = require('../middlewares/productValidator');
+const { validateCreateProduct, validateUpdateProduct } = require('../middlewares/productValidator');
 
-// ==============================
-// 📌 PRODUCTOS - CRUD
-// ==============================
+// ==================== RUTAS PÚBLICAS (Filtros Globales) ====================
+router.route('/')
+  .get(getProducts);
 
-// ✔ Crear producto
-router.post(
-    '/',
-    protect,
-    authorizeRoles('Admin', 'Provider'),
-    validateProduct,
-    productController.createProduct
-);
+// ==================== RUTAS PÚBLICAS (Extracción Específica) ====================
+router.get('/slug/:slug', getProductBySlug);
+router.get('/category/:categoryId', getProductsByCategory);
+router.get('/subcategory/:subcategoryId', getProductsBySubcategory);
+router.get('/brand/:brand', getProductsByBrand);
+router.get('/tags/:tag', getProductsByTag);
 
-// ✔ Obtener todos (con búsqueda, filtrado, paginación, ordenamiento)
-router.get(
-    '/',
-    productController.getProducts
-);
+router.route('/:id')
+  .get(getProductById);
 
-// ✔ Obtener producto por ID
-router.get(
-    '/:id',
-    productController.getProductById
-);
+// ==================== RUTAS DE ADMINISTRACIÓN ====================
 
-// ✔ Obtener por slug (URL friendly)
-router.get(
-    '/slug/:slug',
-    productController.getProductBySlug
-);
+router.route('/')
+  // Provider y Admin autorizados para subir catálogo base
+  .post(protect, authorizeRoles('Admin', 'Provider'), validateCreateProduct, createProduct);
 
-// ✔ Actualizar producto
-router.put(
-    '/:id',
-    protect,
-    authorizeRoles('Admin', 'Provider'),
-    validateProductUpdate,
-    productController.updateProduct
-);
+router.route('/:id')
+  // Modificación de catálogo
+  .put(protect, authorizeRoles('Admin', 'Provider'), validateUpdateProduct, updateProduct)
+  // Únicamente administrador para erradicar temporal o permanentemente productos
+  .delete(protect, authorizeRoles('Admin'), deleteProduct);
 
-// ✔ Eliminar producto (soft/hard)
-router.delete(
-    '/:id',
-    protect,
-    authorizeRoles('Admin'),
-    productController.deleteProduct
-);
-
-// ==============================
-// 📌 FILTROS Y BÚSQUEDAS
-// ==============================
-
-// ✔ Obtener por marca
-router.get(
-    '/brand/:brand',
-    productController.getProductsByBrand
-);
-
-// ✔ Obtener por etiqueta
-router.get(
-    '/tags/:tag',
-    productController.getProductsByTag
-);
-
-// ✔ Obtener por subcategoría
-router.get(
-    '/subcategory/:id',
-    productController.getProductsBySubcategory
-);
-
-// ✔ Obtener por categoría
-router.get(
-    '/category/:id',
-    productController.getProductsByCategory
-);
-
+// ==================== EXPORTACIÓN ====================
 module.exports = router;
-

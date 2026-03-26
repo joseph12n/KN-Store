@@ -1,6 +1,16 @@
+/**
+ * Rutas de Categorías
+ *
+ * Controla el acceso público a las listas de categorías y 
+ * delega los roles de administración/proveedor para alteraciones.
+ *
+ * @module routes/categoryRoutes
+ */
+
 const express = require('express');
 const router = express.Router();
 
+// ==================== CONTROLADORES ====================
 const {
   getCategories,
   getCategoryById,
@@ -9,25 +19,26 @@ const {
   deleteCategory,
 } = require('../controllers/categoryController');
 
+// ==================== MIDDLEWARES ====================
 const { protect, authorizeRoles } = require('../middlewares/authMiddleware');
-const {
-  validateCreateCategory,
-  validateUpdateCategory,
-} = require('../middlewares/categoryValidator');
+const { validateCreateCategory } = require('../middlewares/categoryValidator');
 
-// ==========================================
-// RUTAS PÚBLICAS
-// ==========================================
-
-// Obtener todas las categorías / Crear nueva categoría
+// ==================== RUTAS PÚBLICAS ====================
 router.route('/')
-  .get(getCategories)
+  .get(getCategories);
+
+router.route('/:id')
+  .get(getCategoryById);
+
+// ==================== RUTAS DE ADMINISTRACIÓN ====================
+// (Provider + Admin pueden crear y editar, Solo Admin puede borrar)
+
+router.route('/')
   .post(protect, authorizeRoles('Admin', 'Provider'), validateCreateCategory, createCategory);
 
-// Obtener, actualizar o eliminar una categoría por ID
 router.route('/:id')
-  .get(getCategoryById)
-  .put(protect, authorizeRoles('Admin', 'Provider'), validateUpdateCategory, updateCategory)
+  .put(protect, authorizeRoles('Admin', 'Provider'), updateCategory)
   .delete(protect, authorizeRoles('Admin'), deleteCategory);
 
+// ==================== EXPORTACIÓN ====================
 module.exports = router;

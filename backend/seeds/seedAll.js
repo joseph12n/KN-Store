@@ -1,3 +1,12 @@
+/**
+ * Orquestador de Seeds
+ *
+ * Utilidad de desarrollo que ejecuta automáticamente en secuencia
+ * todos los scripts para poblar la base de datos (Users -> Categories -> Subcategories -> Products).
+ *
+ * @module seeds/seedAll
+ */
+
 const { execSync } = require('child_process');
 const path = require('path');
 
@@ -10,7 +19,10 @@ const seeds = [
   { file: 'seedProducts.js', label: 'Productos' },
 ];
 
-const runAllSeeds = async () => {
+/**
+ * Función principal encargada de la ejecución asíncrona pero bloqueante de secuencias.
+ */
+const runAllSeeds = () => {
   console.log('==========================================');
   console.log('🌱 EJECUTANDO TODOS LOS SEEDS');
   console.log('==========================================\n');
@@ -21,12 +33,13 @@ const runAllSeeds = async () => {
     console.log('------------------------------------------');
 
     try {
+      // stdio: 'inherit' imprime la terminal del subproceso directamente en consola
       execSync(`node "${seedPath}"`, {
         stdio: 'inherit',
         cwd: path.join(seedsDir, '..'),
       });
     } catch (error) {
-      console.error(`\n❌ Error en seed de ${seed.label}. Abortando...`);
+      console.error(`\n❌ Error mortal en secuencia de ${seed.label}. Abortando despliegue de seeds...`);
       process.exit(1);
     }
   }

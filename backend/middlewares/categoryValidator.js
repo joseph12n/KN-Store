@@ -1,29 +1,28 @@
-// Archivo de validación manual de datos para categorías
-// Se ejecuta antes de los controladores para garantizar la integridad de la data
+/**
+ * Validaciones para el Modelo de Categoría
+ *
+ * Constata los datos obligatorios antes de permitir
+ * la creación de nuevas categorías.
+ *
+ * @module middlewares/categoryValidator
+ */
 
+/**
+ * Valida los datos requeridos para crear una categoría.
+ * Solo exige que se proporcione el nombre.
+ */
 const validateCreateCategory = (req, res, next) => {
   const { name } = req.body;
 
-  // Validar que name esté presente y no esté vacío
+  // 1. Validar nombre de la categoría
   if (!name || name.trim().length === 0) {
-    return res.status(400).json({ message: 'El nombre de la categoría es obligatorio' });
+    return res.status(400).json({ success: false, message: 'El nombre de la categoría es obligatorio' });
   }
 
-  next();
-};
-
-const validateUpdateCategory = (req, res, next) => {
-  const { name } = req.body;
-
-  // Si se envía name, validar que no esté vacío
-  if (name !== undefined && name.trim().length === 0) {
-    return res.status(400).json({ message: 'El nombre de la categoría no puede estar vacío' });
-  }
-
+  // La descripción es opcional, así que permitimos que pase
   next();
 };
 
 module.exports = {
-  validateCreateCategory,
-  validateUpdateCategory,
+  validateCreateCategory
 };

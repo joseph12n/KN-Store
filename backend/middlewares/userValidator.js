@@ -1,94 +1,119 @@
-// Archivo de validación manual de datos para usuarios
-// Se ejecuta antes de los controladores para garantizar la integridad de la data
+/**
+ * Validaciones para el Modelo de Usuario
+ *
+ * Middlewares manuales para validar la completitud e integridad de los datos
+ * antes de que lleguen a los controladores de usuarios.
+ * Intercepta peticiones inválidas y retorna errores 400.
+ *
+ * @module middlewares/userValidator
+ */
 
-const validateRegister = (req, res, next) => {
-    const { name, email, password } = req.body;
-    
-    // 1. Validar nombre
-    if (!name || name.trim().length === 0) {
-        return res.status(400).json({ message: 'El nombre es obligatorio' });
-    }
-
-    // 2. Validar formato de email
-    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    if (!email || !emailRegex.test(email)) {
-        return res.status(400).json({ message: 'Por favor ingrese un correo válido' });
-    }
-
-    // 3. Validar longitud de contraseña
-    if (!password || password.length < 6) {
-        return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
-    }
-
-    next();
-};
-
+/**
+ * Valida los datos requeridos para iniciar sesión.
+ */
 const validateLogin = (req, res, next) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ message: 'El correo y la contraseña son obligatorios' });
-    }
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Por favor ingrese correo y contraseña' });
+  }
 
-    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    if (!emailRegex.test(email)) {
-        return res.status(400).json({ message: 'Formato de correo inválido' });
-    }
-
-    next();
+  next();
 };
 
+/**
+ * Valida los datos requeridos para registrar un nuevo cliente (ruta pública).
+ */
+const validateRegister = (req, res, next) => {
+  const { name, last_name, email, password } = req.body;
+
+  // 1. Validar nombre
+  if (!name || name.trim().length === 0) {
+    return res.status(400).json({ success: false, message: 'El nombre es obligatorio' });
+  }
+
+  // 2. Validar apellido
+  if (!last_name || last_name.trim().length === 0) {
+    return res.status(400).json({ success: false, message: 'El apellido es obligatorio' });
+  }
+
+  // 3. Validar formato de email
+  const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+  if (!email || !emailRegex.test(email)) {
+    return res.status(400).json({ success: false, message: 'Por favor ingrese un correo válido' });
+  }
+
+  // 4. Validar longitud de contraseña
+  if (!password || password.length < 6) {
+    return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres' });
+  }
+
+  next();
+};
+
+/**
+ * Valida los datos requeridos para crear un usuario (ruta privada por Admin).
+ * Permite especificar el rol.
+ */
 const validateCreateUser = (req, res, next) => {
-    const { name, email, password, role } = req.body;
+  const { name, last_name, email, password, role } = req.body;
 
-    if (!name || !email || !password) {
-        return res.status(400).json({ message: 'Nombre, Email y Contraseña son requeridos' });
-    }
+  if (!name || !last_name || !email || !password) {
+    return res.status(400).json({ success: false, message: 'Nombre, Apellido, Email y Contraseña son requeridos' });
+  }
 
-    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    if (!emailRegex.test(email)) {
-        return res.status(400).json({ message: 'Formato de correo inválido' });
-    }
+  const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ success: false, message: 'Formato de correo inválido' });
+  }
 
-    if (password.length < 6) {
-        return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
-    }
+  if (password.length < 6) {
+    return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres' });
+  }
 
-    const validRoles = ['Admin', 'Provider', 'Client'];
-    if (role && !validRoles.includes(role)) {
-        return res.status(400).json({ message: `El rol '${role}' no es válido` });
-    }
+  const validRoles = ['Admin', 'Provider', 'Client'];
+  if (role && !validRoles.includes(role)) {
+    return res.status(400).json({ success: false, message: `El rol '${role}' no es válido` });
+  }
 
-    next();
+  next();
 };
 
+/**
+ * Valida los datos al actualizar un usuario.
+ * Todos los campos son opcionales durante la actualización.
+ */
 const validateUpdateUser = (req, res, next) => {
-    const { email, role, password } = req.body;
+  const { email, role, password, last_name } = req.body;
 
-    if (email) {
-        const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ message: 'Formato de correo inválido' });
-        }
+  if (email) {
+    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: 'Formato de correo inválido' });
     }
+  }
 
-    if (role) {
-        const validRoles = ['Admin', 'Provider', 'Client'];
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({ message: `El rol '${role}' no es válido` });
-        }
+  if (last_name !== undefined && last_name.trim().length === 0) {
+    return res.status(400).json({ success: false, message: 'El apellido no puede estar vacío' });
+  }
+
+  if (role) {
+    const validRoles = ['Admin', 'Provider', 'Client'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ success: false, message: `El rol '${role}' no es válido` });
     }
+  }
 
-    if (password && password.length < 6) {
-         return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 6 caracteres' });
-    }
+  if (password && password.length < 6) {
+    return res.status(400).json({ success: false, message: 'La nueva contraseña debe tener al menos 6 caracteres' });
+  }
 
-    next();
+  next();
 };
 
 module.exports = {
-    validateRegister,
-    validateLogin,
-    validateCreateUser,
-    validateUpdateUser
+  validateLogin,
+  validateRegister,
+  validateCreateUser,
+  validateUpdateUser
 };

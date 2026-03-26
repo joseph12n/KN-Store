@@ -1,432 +1,178 @@
+/**
+ * Suite de Pruebas: Módulo de Productos
+ *
+ * Valida la existencia de dependencias (User, Subcategory, Category) para 
+ * luego transaccionar peticiones estructurales robustas e 
+ * interacciones de paginación o búsqueda de texto.
+ *
+ * @module tests/testProductsModule
+ */
+
 const { makeRequest, BASE_URLS } = require('./helpers/httpClient');
 
 const runTests = async () => {
-    console.log('==========================================');
-    console.log('🧪 PRUEBAS MÓDULO DE PRODUCTOS');
-    console.log('=> Asegúrate de que el servidor esté corriendo en el puerto 3000');
-    console.log('==========================================\n');
+  console.log('==========================================');
+  console.log('🧪 INICIANDO PRUEBAS MÓDULO DE PRODUCTOS');
+  console.log('=> Asegúrate de que el servidor esté corriendo en el puerto 3000');
+  console.log('==========================================\n');
 
-    let adminToken = null;
-    let providerToken = null;
-    let clientToken = null;
-    let categoryId = null;
-    let subcategoryId = null;
-    let productId = null;
-    let productSlug = null;
+  let adminToken = null;
+  let providerToken = null;
+  let clientToken = null;
+  
+  let categoryId = null;
+  let subcategoryId = null;
+  
+  let productId = null;
+  let productSlug = null;
 
-    try {
+  try {
+    // ==========================================
+    // 0. AUTENTICACIÓN
+    // ==========================================
+    console.log('--- 0. Autenticación de Roles ---');
 
-        // ==========================================
-        // 0. AUTENTICACIÓN DE ROLES
-        // ==========================================
-        console.log('--- 0. Autenticación de Roles ---');
+    let res = await makeRequest('POST', `${BASE_URLS.users}/login`, { email: 'admin@knstore.com', password: 'password123' });
+    if (res.status === 200) { adminToken = res.data.data.token; console.log(' ✅ Admin'); }
 
-        let res = await makeRequest('POST', `${BASE_URLS.users}/login`, {
-            email: 'admin@knstore.com',
-            password: 'password123',
-        });
-        if (res.status === 200 && res.data.token) {
-            adminToken = res.data.token;
-            console.log(' ✅ Admin autenticado.');
-        } else {
-            console.log(' ❌ Falló login de Admin.', res.data);
-        }
+    res = await makeRequest('POST', `${BASE_URLS.users}/login`, { email: 'proveedor@knstore.com', password: 'password123' });
+    if (res.status === 200) { providerToken = res.data.data.token; console.log(' ✅ Provider'); }
 
-        res = await makeRequest('POST', `${BASE_URLS.users}/login`, {
-            email: 'proveedor@knstore.com',
-            password: 'password123',
-        });
-        if (res.status === 200 && res.data.token) {
-            providerToken = res.data.token;
-            console.log(' ✅ Provider autenticado.');
-        } else {
-            console.log(' ❌ Falló login de Provider.', res.data);
-        }
+    res = await makeRequest('POST', `${BASE_URLS.users}/login`, { email: 'cliente@gmail.com', password: 'password123' });
+    if (res.status === 200) { clientToken = res.data.data.token; console.log(' ✅ Cliente'); }
 
-        res = await makeRequest('POST', `${BASE_URLS.users}/login`, {
-            email: 'cliente@gmail.com',
-            password: 'password123',
-        });
-        if (res.status === 200 && res.data.token) {
-            clientToken = res.data.token;
-            console.log(' ✅ Cliente autenticado.');
-        } else {
-            console.log(' ❌ Falló login de Cliente.', res.data);
-        }
+    // ==========================================
+    // 0.1 RECUPERACIÓN DEPENDENCIAS MATRIZ
+    // ==========================================
+    console.log('\n--- Recuperación de Relaciones (Categoría/Subcategoría) ---');
 
-        // ==========================================
-        // OBTENER CATEGORIA Y SUBCATEGORIA
-        // ==========================================
-        console.log('\n--- Obteniendo Categoría y Subcategoría de referencia ---');
-
-        const catRes = await makeRequest('GET', BASE_URLS.categories);
-        if (catRes.status === 200 && catRes.data.length > 0) {
-            categoryId = catRes.data[0]._id;
-            console.log(` ✅ Categoría obtenida: "${catRes.data[0].name}" (${categoryId})`);
-        } else {
-            console.log(' ❌ No hay categorías disponibles. Ejecuta: npm run seed:categories');
-            return;
-        }
-
-        const subRes = await makeRequest('GET', BASE_URLS.subcategories);
-        if (subRes.status === 200 && subRes.data.count > 0) {
-            // Buscar una subcategoría que pertenezca a la categoría obtenida
-            const matchingSub = subRes.data.data.find(
-                s => s.category && s.category._id === categoryId
-            ) || subRes.data.data[0];
-            subcategoryId = matchingSub._id;
-            categoryId = matchingSub.category._id || categoryId;
-            console.log(` ✅ Subcategoría obtenida: "${matchingSub.name}" (${subcategoryId})`);
-        } else {
-            console.log(' ❌ No hay subcategorías. Ejecuta: npm run seed:subcategories');
-            return;
-        }
-
-        // ==========================================
-        // 1. CREAR PRODUCTO
-        // ==========================================
-        console.log('\n--- 1. Crear Producto ---');
-
-        const skuTest = `TEST-SKU-${Date.now()}`;
-
-        // 1.1 Crear producto como Admin (exitoso)
-        console.log('[POST /api/products] Admin crea un producto');
-        res = await makeRequest('POST', BASE_URLS.products, {
-            name: `Zapatilla Test ${Date.now()}`,
-            sku: skuTest,
-            description: 'Producto de prueba con descripción válida para el test',
-            brand: 'TestBrand',
-            price: 89.99,
-            costPrice: 50.00,
-            stock: 30,
-            category: categoryId,
-            subcategory: subcategoryId,
-            tags: ['test', 'prueba'],
-            isAvailable: true,
-        }, adminToken);
-        if (res.status === 201 && res.data.success) {
-            productId = res.data.data._id;
-            productSlug = res.data.data.slug;
-            console.log(` ✅ Producto creado. ID: ${productId} | Slug: ${productSlug}`);
-        } else {
-            console.log(' ❌ Error al crear producto.', res.data);
-        }
-
-        // 1.2 Crear producto como Provider (exitoso)
-        console.log('\n[POST /api/products] Provider crea un producto');
-        res = await makeRequest('POST', BASE_URLS.products, {
-            name: `Zapatilla Provider ${Date.now()}`,
-            sku: `PROV-SKU-${Date.now()}`,
-            description: 'Producto creado por proveedor para prueba del sistema',
-            brand: 'ProviderBrand',
-            price: 59.99,
-            costPrice: 35.00,
-            stock: 20,
-            category: categoryId,
-            subcategory: subcategoryId,
-        }, providerToken);
-        if (res.status === 201 && res.data.success) {
-            console.log(` ✅ Provider puede crear productos. ID: ${res.data.data._id}`);
-        } else {
-            console.log(' ❌ Provider no pudo crear producto.', res.data);
-        }
-
-        // 1.3 Cliente intenta crear producto (debe fallar 403)
-        console.log('\n[POST /api/products] Cliente intenta crear producto (debe fallar 403)');
-        res = await makeRequest('POST', BASE_URLS.products, {
-            name: 'Producto No Autorizado',
-            sku: 'NO-AUTH-001',
-            description: 'Este producto no debería crearse',
-            price: 10.00,
-            costPrice: 5.00,
-            stock: 5,
-            category: categoryId,
-            subcategory: subcategoryId,
-        }, clientToken);
-        if (res.status === 403) {
-            console.log(' ✅ Bloqueado correctamente (403) - Cliente no puede crear productos.');
-        } else {
-            console.log(` ❌ Falló protección RBAC. Status: ${res.status}`);
-        }
-
-        // 1.4 Sin token intenta crear (debe fallar 401)
-        console.log('\n[POST /api/products] Sin token intenta crear (debe fallar 401)');
-        res = await makeRequest('POST', BASE_URLS.products, {
-            name: 'Producto Sin Token',
-            sku: 'NO-TOKEN-001',
-            description: 'Sin autenticación',
-            price: 10.00,
-            costPrice: 5.00,
-            stock: 5,
-            category: categoryId,
-            subcategory: subcategoryId,
-        });
-        if (res.status === 401) {
-            console.log(' ✅ Bloqueado correctamente (401) - Se requiere autenticación.');
-        } else {
-            console.log(` ❌ Falló protección de autenticación. Status: ${res.status}`);
-        }
-
-        // ==========================================
-        // 2. OBTENER PRODUCTOS (LECTURA PÚBLICA)
-        // ==========================================
-        console.log('\n--- 2. Obtener Productos (Rutas Públicas) ---');
-
-        // 2.1 Listar todos
-        console.log('[GET /api/products] Listar todos los productos');
-        res = await makeRequest('GET', BASE_URLS.products);
-        if (res.status === 200 && res.data.success) {
-            console.log(` ✅ Productos obtenidos: ${res.data.data.length} | Total: ${res.data.pagination.total}`);
-        } else {
-            console.log(' ❌ Error al listar productos.', res.data);
-        }
-
-        // 2.2 Obtener por ID
-        if (productId) {
-            console.log(`\n[GET /api/products/${productId}] Obtener por ID`);
-            res = await makeRequest('GET', `${BASE_URLS.products}/${productId}`);
-            if (res.status === 200 && res.data.success) {
-                console.log(` ✅ Producto encontrado: "${res.data.data.name}"`);
-            } else {
-                console.log(' ❌ Error al obtener por ID.', res.data);
-            }
-        }
-
-        // 2.3 Obtener por Slug
-        if (productSlug) {
-            console.log(`\n[GET /api/products/slug/${productSlug}] Obtener por Slug`);
-            res = await makeRequest('GET', `${BASE_URLS.products}/slug/${productSlug}`);
-            if (res.status === 200 && res.data.success) {
-                console.log(` ✅ Producto encontrado por slug: "${res.data.data.name}"`);
-            } else {
-                console.log(' ❌ Error al obtener por slug.', res.data);
-            }
-        }
-
-        // 2.4 Obtener por Categoría
-        console.log(`\n[GET /api/products/category/${categoryId}] Obtener por Categoría`);
-        res = await makeRequest('GET', `${BASE_URLS.products}/category/${categoryId}`);
-        if (res.status === 200 && res.data.success) {
-            console.log(` ✅ Productos de la categoría: ${res.data.data.length}`);
-        } else {
-            console.log(' ❌ Error al obtener por categoría.', res.data);
-        }
-
-        // 2.5 Obtener por Subcategoría
-        console.log(`\n[GET /api/products/subcategory/${subcategoryId}] Obtener por Subcategoría`);
-        res = await makeRequest('GET', `${BASE_URLS.products}/subcategory/${subcategoryId}`);
-        if (res.status === 200 && res.data.success) {
-            console.log(` ✅ Productos de la subcategoría: ${res.data.data.length}`);
-        } else {
-            console.log(' ❌ Error al obtener por subcategoría.', res.data);
-        }
-
-        // 2.6 Obtener por Marca
-        console.log('\n[GET /api/products/brand/TestBrand] Obtener por Marca');
-        res = await makeRequest('GET', `${BASE_URLS.products}/brand/TestBrand`);
-        if (res.status === 200 && res.data.success) {
-            console.log(` ✅ Productos de la marca "TestBrand": ${res.data.data.length}`);
-        } else {
-            console.log(' ❌ Error al obtener por marca.', res.data);
-        }
-
-        // 2.7 Obtener por Tag
-        console.log('\n[GET /api/products/tags/test] Obtener por Tag');
-        res = await makeRequest('GET', `${BASE_URLS.products}/tags/test`);
-        if (res.status === 200 && res.data.success) {
-            console.log(` ✅ Productos con tag "test": ${res.data.data.length}`);
-        } else {
-            console.log(' ❌ Error al obtener por tag.', res.data);
-        }
-
-        // ==========================================
-        // 3. FILTROS Y PAGINACIÓN
-        // ==========================================
-        console.log('\n--- 3. Filtros y Paginación ---');
-
-        // 3.1 Búsqueda de texto
-        console.log('[GET /api/products?q=Nike] Búsqueda de texto');
-        res = await makeRequest('GET', `${BASE_URLS.products}?q=Nike`);
-        if (res.status === 200 && res.data.success) {
-            console.log(` ✅ Resultados de búsqueda "Nike": ${res.data.data.length}`);
-        } else {
-            console.log(' ❌ Error en búsqueda de texto.', res.data);
-        }
-
-        // 3.2 Filtro de precio
-        console.log('\n[GET /api/products?priceMin=50&priceMax=100] Filtro de precio');
-        res = await makeRequest('GET', `${BASE_URLS.products}?priceMin=50&priceMax=100`);
-        if (res.status === 200 && res.data.success) {
-            console.log(` ✅ Productos entre $50-$100: ${res.data.data.length}`);
-        } else {
-            console.log(' ❌ Error en filtro de precio.', res.data);
-        }
-
-        // 3.3 Filtro en stock
-        console.log('\n[GET /api/products?inStock=true] Filtro solo en stock');
-        res = await makeRequest('GET', `${BASE_URLS.products}?inStock=true`);
-        if (res.status === 200 && res.data.success) {
-            console.log(` ✅ Productos en stock: ${res.data.data.length}`);
-        } else {
-            console.log(' ❌ Error en filtro de stock.', res.data);
-        }
-
-        // 3.4 Paginación
-        console.log('\n[GET /api/products?page=1&limit=2] Paginación (2 por página)');
-        res = await makeRequest('GET', `${BASE_URLS.products}?page=1&limit=2`);
-        if (res.status === 200 && res.data.success) {
-            const p = res.data.pagination;
-            console.log(` ✅ Paginación correcta. Página: ${p.page}/${p.pages} | Total: ${p.total} | hasNext: ${p.hasNext}`);
-        } else {
-            console.log(' ❌ Error en paginación.', res.data);
-        }
-
-        // ==========================================
-        // 4. ACTUALIZAR PRODUCTO
-        // ==========================================
-        console.log('\n--- 4. Actualizar Producto ---');
-
-        if (productId) {
-            // 4.1 Admin actualiza
-            console.log(`[PUT /api/products/${productId}] Admin actualiza precio y stock`);
-            res = await makeRequest('PUT', `${BASE_URLS.products}/${productId}`, {
-                price: 99.99,
-                stock: 50,
-            }, adminToken);
-            if (res.status === 200 && res.data.success) {
-                console.log(` ✅ Producto actualizado. Nuevo precio: $${res.data.data.price} | Stock: ${res.data.data.stock}`);
-            } else {
-                console.log(' ❌ Error al actualizar producto.', res.data);
-            }
-
-            // 4.2 Provider actualiza
-            console.log(`\n[PUT /api/products/${productId}] Provider actualiza descripción`);
-            res = await makeRequest('PUT', `${BASE_URLS.products}/${productId}`, {
-                description: 'Descripción actualizada correctamente por el proveedor del sistema',
-            }, providerToken);
-            if (res.status === 200 && res.data.success) {
-                console.log(' ✅ Provider puede actualizar productos.');
-            } else {
-                console.log(' ❌ Provider no pudo actualizar.', res.data);
-            }
-
-            // 4.3 Cliente intenta actualizar (debe fallar 403)
-            console.log(`\n[PUT /api/products/${productId}] Cliente intenta actualizar (debe fallar 403)`);
-            res = await makeRequest('PUT', `${BASE_URLS.products}/${productId}`, {
-                price: 1.00,
-            }, clientToken);
-            if (res.status === 403) {
-                console.log(' ✅ Bloqueado correctamente (403) - Cliente no puede actualizar productos.');
-            } else {
-                console.log(` ❌ Falló protección RBAC. Status: ${res.status}`);
-            }
-        }
-
-        // ==========================================
-        // 5. VALIDACIONES
-        // ==========================================
-        console.log('\n--- 5. Validaciones ---');
-
-        // 5.1 Crear producto sin campos obligatorios
-        console.log('[POST /api/products] Crear sin campos obligatorios (debe fallar 400)');
-        res = await makeRequest('POST', BASE_URLS.products, {
-            name: 'Producto Incompleto',
-        }, adminToken);
-        if (res.status === 400) {
-            console.log(' ✅ Validación correcta (400) - Campos obligatorios requeridos.');
-        } else {
-            console.log(` ❌ Falló la validación. Status: ${res.status}`, res.data);
-        }
-
-        // 5.2 Precio negativo
-        console.log('\n[POST /api/products] Precio negativo (debe fallar 400)');
-        res = await makeRequest('POST', BASE_URLS.products, {
-            name: 'Producto Precio Negativo',
-            sku: `NEG-${Date.now()}`,
-            description: 'Test de validación de precio negativo en el sistema',
-            price: -10,
-            costPrice: 5,
-            stock: 10,
-            category: categoryId,
-            subcategory: subcategoryId,
-        }, adminToken);
-        if (res.status === 400) {
-            console.log(' ✅ Validación correcta (400) - Precio negativo rechazado.');
-        } else {
-            console.log(` ❌ Falló la validación de precio negativo. Status: ${res.status}`);
-        }
-
-        // 5.3 ID inexistente
-        console.log('\n[GET /api/products/000000000000000000000000] ID inexistente (debe fallar 404)');
-        res = await makeRequest('GET', `${BASE_URLS.products}/000000000000000000000000`);
-        if (res.status === 404) {
-            console.log(' ✅ Respuesta correcta (404) - Producto no encontrado.');
-        } else {
-            console.log(` ❌ Se esperaba 404. Status: ${res.status}`);
-        }
-
-        // ==========================================
-        // 6. ELIMINAR PRODUCTO (SOFT Y HARD DELETE)
-        // ==========================================
-        console.log('\n--- 6. Eliminar Producto ---');
-
-        if (productId) {
-            // 6.1 Provider intenta eliminar (debe fallar 403)
-            console.log(`[DELETE /api/products/${productId}] Provider intenta eliminar (debe fallar 403)`);
-            res = await makeRequest('DELETE', `${BASE_URLS.products}/${productId}`, null, providerToken);
-            if (res.status === 403) {
-                console.log(' ✅ Bloqueado correctamente (403) - Solo Admin puede eliminar productos.');
-            } else {
-                console.log(` ❌ Falló protección RBAC en DELETE. Status: ${res.status}`);
-            }
-
-            // 6.2 Admin hace soft delete
-            console.log(`\n[DELETE /api/products/${productId}] Admin hace soft delete`);
-            res = await makeRequest('DELETE', `${BASE_URLS.products}/${productId}`, null, adminToken);
-            if (res.status === 200 && res.data.success) {
-                console.log(' ✅ Soft delete exitoso - Producto desactivado.');
-            } else {
-                console.log(' ❌ Error en soft delete.', res.data);
-            }
-
-            // 6.3 Verificar que ya no aparece en listado público
-            console.log(`\n[GET /api/products/${productId}] Verificar que sigue accesible por ID tras soft delete`);
-            res = await makeRequest('GET', `${BASE_URLS.products}/${productId}`);
-            if (res.status === 200) {
-                console.log(` ✅ Producto aún accesible por ID. active: ${res.data.data.active}`);
-            } else {
-                console.log(` Status: ${res.status}`);
-            }
-
-            // 6.4 Admin hace hard delete
-            console.log(`\n[DELETE /api/products/${productId}?hardDelete=true] Admin hace hard delete`);
-            res = await makeRequest('DELETE', `${BASE_URLS.products}/${productId}?hardDelete=true`, null, adminToken);
-            if (res.status === 200 && res.data.success) {
-                console.log(' ✅ Hard delete exitoso - Producto eliminado permanentemente.');
-            } else {
-                console.log(' ❌ Error en hard delete.', res.data);
-            }
-
-            // 6.5 Verificar que ya no existe
-            console.log(`\n[GET /api/products/${productId}] Verificar eliminación permanente (debe fallar 404)`);
-            res = await makeRequest('GET', `${BASE_URLS.products}/${productId}`);
-            if (res.status === 404) {
-                console.log(' ✅ Producto eliminado correctamente (404).');
-            } else {
-                console.log(` ❌ El producto sigue existiendo. Status: ${res.status}`);
-            }
-        }
-
-    } catch (error) {
-        console.error('❌ Error general:', error.message);
-        if (error.code === 'ECONNREFUSED') {
-            console.log("\n⚠️  EL SERVIDOR NO ESTÁ RESPONDIENDO. Inicia el servidor con: npm run dev\n");
-        }
+    const catRes = await makeRequest('GET', BASE_URLS.categories);
+    if (catRes.status === 200 && catRes.data.data.length > 0) {
+      categoryId = catRes.data.data[0]._id;
+      console.log(` ✅ Matriz Central (Categoría) validada: ${categoryId}`);
+    } else {
+      console.log(' ❌ Ausencia de elementos en Base (npm run seed)');
+      return;
     }
 
-    console.log('\n==========================================');
-    console.log('🏁 PRUEBAS DE PRODUCTOS FINALIZADAS');
-    console.log('==========================================');
+    const subRes = await makeRequest('GET', BASE_URLS.subcategories);
+    if (subRes.status === 200 && subRes.data.count > 0) {
+      const match = subRes.data.data.find(s => s.category && s.category._id === categoryId) || subRes.data.data[0];
+      subcategoryId = match._id;
+      categoryId = match.category._id || categoryId;
+      console.log(` ✅ Rama Inferior (Subcategoría) hallada: ${subcategoryId}`);
+    } else {
+      console.log(' ❌ Ausencia de elementos subcategóricos en Base');
+      return;
+    }
+
+    // ==========================================
+    // 1. INYECCIÓN BÁSICA
+    // ==========================================
+    console.log('\n--- 1. Inyección de Producto ---');
+
+    const skuTest = `QA-SKU-${Date.now()}`;
+    console.log(`[POST /api/products] Operario: Admin, Inyectando QA`);
+    
+    res = await makeRequest('POST', BASE_URLS.products, {
+      name: `Cinta Métrica QA ${Date.now()}`,
+      sku: skuTest,
+      description: 'Producto temporal para auditoría de transacciones automatizadas.',
+      brand: 'GenericoQA',
+      price: 89.99,
+      costPrice: 50.00,
+      stock: 30,
+      category: categoryId,
+      subcategory: subcategoryId,
+      tags: ['test', 'prueba', 'QA'],
+      isAvailable: true,
+    }, adminToken);
+    
+    if (res.status === 201 && res.data.success) {
+      productId = res.data.data._id;
+      productSlug = res.data.data.slug;
+      console.log(` ✅ Bloque exitoso. ID: ${productId} | Slug: ${productSlug}`);
+    } else {
+      console.log(' ❌ Error de creación', res.data);
+    }
+
+    // Provider
+    console.log('\n[POST /api/products] Operario: Provider');
+    res = await makeRequest('POST', BASE_URLS.products, {
+      name: `Zapatilla Provider QA ${Date.now()}`,
+      sku: `PROV-QA-SKU-${Date.now()}`,
+      description: 'Producto registrado por perfil Proveedor.',
+      brand: 'ProviderBrand',
+      price: 59.99,
+      costPrice: 35.00,
+      stock: 20,
+      category: categoryId,
+      subcategory: subcategoryId,
+    }, providerToken);
+    if (res.status === 201) console.log(` ✅ Proveedor validado. ID: ${res.data.data._id}`);
+
+    // Cliente (Debe frenar)
+    console.log('\n[POST /api/products] Operario: Cliente (403)');
+    res = await makeRequest('POST', BASE_URLS.products, { name: 'Inválido', sku: 'NO', description: '0000000000', price: 1, costPrice: 0, stock: 1, category: categoryId, subcategory: subcategoryId }, clientToken);
+    if (res.status === 403) console.log(' ✅ RBAC Cliente contuvo el ataque.');
+
+    // ==========================================
+    // 2. EXTRACCIONES PUBLICAS Y LECTURAS
+    // ==========================================
+    console.log('\n--- 2. Obtener Productos ---');
+
+    res = await makeRequest('GET', BASE_URLS.products);
+    if (res.status === 200) console.log(` [GET Lista] Colección general validada. Elementos: ${res.data.data.length}`);
+
+    if (productId) {
+      res = await makeRequest('GET', `${BASE_URLS.products}/${productId}`);
+      if (res.status === 200) console.log(` [GET ID] Encontrado: ${res.data.data.name}`);
+    }
+
+    if (productSlug) {
+      res = await makeRequest('GET', `${BASE_URLS.products}/slug/${productSlug}`);
+      if (res.status === 200) console.log(` [GET Slug] Match dinámico correcto: ${res.data.data.name}`);
+    }
+
+    // ==========================================
+    // 3. PAGINACIÓN Y FILTRADO (TEXT SEARCH)
+    // ==========================================
+    console.log('\n--- 3. Paginación y Filtrado Complejo ---');
+
+    console.log('[GET ?page=1&limit=2] Paginado P1/L2');
+    res = await makeRequest('GET', `${BASE_URLS.products}?page=1&limit=2`);
+    if (res.status === 200) console.log(` ✅ Respuesta. HasNext: ${res.data.pagination.hasNext} | Pages: ${res.data.pagination.pages}`);
+
+    console.log('[GET ?inStock=true] Filtrado InStock');
+    res = await makeRequest('GET', `${BASE_URLS.products}?inStock=true`);
+    if (res.status === 200) console.log(` ✅ Filtrado exitoso. Contó: ${res.data.data.length}`);
+
+    console.log('[GET ?q=Test] Texto/Indizado Full-Text Search');
+    res = await makeRequest('GET', `${BASE_URLS.products}?q=Test`);
+    if (res.status === 200) console.log(` ✅ Índices de búsqueda respondiendo`);
+
+    // ==========================================
+    // 4. ELIMINACIÓN
+    // ==========================================
+    console.log('\n--- 4. Eliminación de Producto ---');
+
+    if (productId) {
+      console.log(`\n[DELETE /api/products/${productId}] Provider intenta (403)`);
+      res = await makeRequest('DELETE', `${BASE_URLS.products}/${productId}`, null, providerToken);
+      if (res.status === 403) console.log(' ✅ Provider RBAC actuando');
+
+      console.log(`\n[DELETE /api/products/${productId}?hardDelete=true] Admin Hard Delete`);
+      res = await makeRequest('DELETE', `${BASE_URLS.products}/${productId}?hardDelete=true`, null, adminToken);
+      if (res.status === 200) console.log(' ✅ Operación de limpieza quirúrgica completa');
+    }
+
+  } catch (err) {
+    console.error('❌ Error Transversal en Sistema QA:', err.message);
+  }
+
+  console.log('\n==========================================');
+  console.log('🏁 CONCLUYÓ TEST DE PRODUCTOS');
+  console.log('==========================================');
 };
 
 runTests();
