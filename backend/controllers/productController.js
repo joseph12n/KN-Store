@@ -85,7 +85,7 @@ const getProducts = async (req, res) => {
 };
 
 /**
- * Obtener un producto en específico por su ObjectID.
+ * Obtener un producto específico por su ObjectID.
  * @route GET /api/products/:id
  * @access Público
  */
@@ -97,13 +97,13 @@ const getProductById = async (req, res) => {
       .populate('provider', 'name email');
 
     if (!product || !product.active) {
-      return res.status(404).json({ success: false, message: 'Producto no hallado u oculto en el sistema' });
+      return res.status(404).json({ success: false, message: 'Producto no encontrado o no disponible' });
     }
 
     res.status(200).json({ success: true, data: product });
   } catch (error) {
     if (error.name === 'CastError') {
-      return res.status(404).json({ success: false, message: 'Identificador del producto no es correcto' });
+      return res.status(404).json({ success: false, message: 'El ID del producto no es válido' });
     }
     res.status(500).json({ success: false, message: 'Error interno en el servidor', error: error.message });
   }
@@ -134,9 +134,9 @@ const getProductBySlug = async (req, res) => {
 // ==================== RUTAS DE FILTRADO RELACIONAL ====================
 
 /**
- * Reutiliza código común para retornar resultados filtrados.
+ * Reutiliza código común para retornar resultados filtrados por propiedad.
  */
-const getUsersByProperty = async (propertyObj, res) => {
+const getProductsByProperty = async (propertyObj, res) => {
   try {
     const products = await Product.find({ ...propertyObj, active: true, isAvailable: true })
       .populate('category', 'name')
@@ -152,25 +152,25 @@ const getUsersByProperty = async (propertyObj, res) => {
  * Extraer todos los productos adjuntos a una Categoría.
  * @route GET /api/products/category/:categoryId
  */
-const getProductsByCategory = (req, res) => getUsersByProperty({ category: req.params.categoryId }, res);
+const getProductsByCategory = (req, res) => getProductsByProperty({ category: req.params.categoryId }, res);
 
 /**
  * Extraer todos los productos adjuntos a una Subcategoría.
  * @route GET /api/products/subcategory/:subcategoryId
  */
-const getProductsBySubcategory = (req, res) => getUsersByProperty({ subcategory: req.params.subcategoryId }, res);
+const getProductsBySubcategory = (req, res) => getProductsByProperty({ subcategory: req.params.subcategoryId }, res);
 
 /**
  * Extraer todos los productos pertenecientes a una misma Marca.
  * @route GET /api/products/brand/:brand
  */
-const getProductsByBrand = (req, res) => getUsersByProperty({ brand: req.params.brand }, res);
+const getProductsByBrand = (req, res) => getProductsByProperty({ brand: req.params.brand }, res);
 
 /**
  * Extraer todos los productos de una etiqueta especial.
  * @route GET /api/products/tags/:tag
  */
-const getProductsByTag = (req, res) => getUsersByProperty({ tags: req.params.tag }, res);
+const getProductsByTag = (req, res) => getProductsByProperty({ tags: req.params.tag }, res);
 
 
 // ==================== RUTAS DE ADMINISTRACIÓN (ESCRITURA) ====================
@@ -188,7 +188,7 @@ const createProduct = async (req, res) => {
       images, tags, discount, isAvailable, availableDate 
     } = req.body;
 
-    // Constatar que la categoría y la subcategoría designadas existan
+    // Verificar que la categoría y la subcategoría designadas existan
     const [catExists, subExists] = await Promise.all([
       Category.findById(category),
       Subcategory.findById(subcategory)
@@ -223,12 +223,12 @@ const createProduct = async (req, res) => {
     await newProduct.populate('subcategory', 'name');
     await newProduct.populate('provider', 'name email');
 
-    res.status(201).json({ success: true, data: newProduct, message: 'Producto guardado correctamente' });
+    res.status(201).json({ success: true, data: newProduct, message: 'Producto creado exitosamente' });
   } catch (error) {
     if (error.message.includes('ya existe en la base de datos')) {
       return res.status(400).json({ success: false, message: error.message });
     }
-    res.status(500).json({ success: false, message: 'Error interno en servidor', error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno en el servidor', error: error.message });
   }
 };
 
@@ -247,15 +247,15 @@ const updateProduct = async (req, res) => {
 
     if (category) {
       const categoryExists = await Category.findById(category);
-      if (!categoryExists) return res.status(404).json({ success: false, message: 'Categoría indicada ausente' });
+      if (!categoryExists) return res.status(404).json({ success: false, message: 'La categoría especificada no existe' });
     }
 
     if (subcategory) {
       const subcategoryExists = await Subcategory.findById(subcategory);
-      if (!subcategoryExists) return res.status(404).json({ success: false, message: 'Subcategoría indicada ausente' });
+      if (!subcategoryExists) return res.status(404).json({ success: false, message: 'La subcategoría especificada no existe' });
     }
 
-    // Constatamos un parche dinámico para evitar sobreescritura vacía
+    // Construimos un parche dinámico para evitar sobreescritura vacía
     const updateData = {};
     if (name) updateData.name = name.trim();
     if (sku) updateData.sku = sku.toUpperCase();
@@ -275,7 +275,7 @@ const updateProduct = async (req, res) => {
     if (isAvailable !== undefined) updateData.isAvailable = isAvailable;
     if (availableDate !== undefined) updateData.availableDate = availableDate;
 
-    // Ejecutamos parcheo validando integridades
+    // Ejecutamos la actualización validando integridades
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id, 
       updateData, 
@@ -285,17 +285,17 @@ const updateProduct = async (req, res) => {
     .populate('subcategory', 'name')
     .populate('provider', 'name email');
 
-    if (!updatedProduct) return res.status(404).json({ success: false, message: 'El producto actual no fue encontrado en BD' });
+    if (!updatedProduct) return res.status(404).json({ success: false, message: 'Producto no encontrado' });
 
-    res.status(200).json({ success: true, data: updatedProduct, message: 'Refactorizado en BD satisfactoriamente' });
+    res.status(200).json({ success: true, data: updatedProduct, message: 'Producto actualizado exitosamente' });
   } catch (error) {
-    if (error.code === 11000) return res.status(400).json({ success: false, message: 'Colisión de atributos de ID/Slug' });
-    res.status(500).json({ success: false, message: 'Falla al procesar transacciones', error: error.message });
+    if (error.code === 11000) return res.status(400).json({ success: false, message: 'Ya existe un producto con ese nombre o SKU' });
+    res.status(500).json({ success: false, message: 'Error interno en el servidor', error: error.message });
   }
 };
 
 /**
- * Erradica a un producto del sistema. Soporta flag soft/hard-delete ?hardDelete=true.
+ * Elimina un producto del sistema. Soporta borrado suave o permanente (?hardDelete=true).
  * @route DELETE /api/products/:id
  * @access Privado (Admin Only)
  */
@@ -304,20 +304,20 @@ const deleteProduct = async (req, res) => {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({ success: false, message: 'Producto ausente/inexistente' });
+      return res.status(404).json({ success: false, message: 'Producto no encontrado' });
     }
 
     if (req.query.hardDelete === 'true') {
       await product.deleteOne();
-      return res.status(200).json({ success: true, message: 'Registro purgado permanentemente' });
+      return res.status(200).json({ success: true, message: 'Producto eliminado permanentemente' });
     }
 
     product.active = false;
     await product.save();
 
-    res.status(200).json({ success: true, message: 'Exclusión temporal aplicada sin destruir logs de transacciones' });
+    res.status(200).json({ success: true, message: 'Producto desactivado correctamente' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Deficiencia en backend o Mongoose', error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno en el servidor', error: error.message });
   }
 };
 

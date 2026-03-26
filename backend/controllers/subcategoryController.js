@@ -88,7 +88,7 @@ const createSubcategory = async (req, res) => {
     // 1. Validamos que la categoría referenciada realmente exista
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
-      return res.status(404).json({ success: false, message: 'La categoría especificada no existe en la BD' });
+      return res.status(404).json({ success: false, message: 'La categoría especificada no existe' });
     }
 
     // 2. Creamos la subcategoría

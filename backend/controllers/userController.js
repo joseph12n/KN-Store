@@ -4,7 +4,7 @@
  * Se encarga de la lógica de negocio para:
  * - Autenticación (Login, Registro, Logout)
  * - Gestión de perfiles (Consultar, Eliminar cuenta propia)
- * - Administración de usuarios (CRUD CRUD por parte de Admin)
+ * - Administración de usuarios (CRUD por parte de Admin)
  *
  * @module controllers/userController
  */
@@ -55,7 +55,7 @@ const loginUser = async (req, res) => {
  */
 const logoutUser = async (req, res) => {
   try {
-    // Al usar JWT stateles, el servidor no puede invalidar el token activamente.
+    // Al usar JWT stateless, el servidor no puede invalidar el token activamente.
     // El cliente debe borrar el token de su almacenamiento (localStorage/Cookies).
     // Aquí podemos realizar limpieza o registrar auditoría si es necesario.
     res.status(200).json({
