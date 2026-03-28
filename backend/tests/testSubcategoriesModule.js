@@ -73,21 +73,45 @@ const runTests = async () => {
     }
 
     // =============================
-    // 3. LECTURA (GET ALL & ID)
+    // 3. LECTURA GENERAL (GET ALL)
     // =============================
-    console.log('\n--- 3. Extracción de Lotes ---');
+    console.log('\n--- 3. Extracción General de Subcategorías ---');
 
     res = await makeRequest('GET', BASE_URLS.subcategories);
-    if (res.status === 200) console.log(` ✅ Subcategorías colectadas: ${res.data.count}`);
-    else console.log(' ❌ Ruptura en extracción global');
-
-    console.log('\n--- 4. Extracción Unitaria (ID) ---');
-    res = await makeRequest('GET', `${BASE_URLS.subcategories}/${subcategoryId}`);
-    if (res.status === 200) console.log(' ✅ Match de ObjectID exitoso');
-    else console.log(' ❌ Fallo por ID fantasma');
+    if (res.status === 200) console.log(` ✅ Subcategorías obtenidas: ${res.data.count}`);
+    else console.log(' ❌ Error en extracción general');
 
     // =============================
-    // 4. ACTUALIZACIÓN (PUT)
+    // 4. CONSULTA POR ID (GET /:id)
+    // =============================
+    console.log('\n--- 4. Consulta de Subcategoría por ID ---');
+
+    if (subcategoryId) {
+      // 4a. ID válido y existente — debe retornar 200 con categoría populada
+      console.log(`[GET /api/subcategories/${subcategoryId}] ID válido recién creado`);
+      res = await makeRequest('GET', `${BASE_URLS.subcategories}/${subcategoryId}`);
+
+      if (res.status === 200 && res.data.data._id === subcategoryId) {
+        console.log(` ✅ Subcategoría encontrada: "${res.data.data.name}" → Categoría: ${res.data.data.category?.name}`);
+      } else {
+        console.log(` ❌ Fallo en consulta por ID. Status: ${res.status}`, res.data);
+      }
+
+      // 4b. ObjectId válido pero inexistente — debe retornar 404
+      console.log('\n[GET /api/subcategories/000000000000000000000000] ObjectId inexistente (404 esperado)');
+      res = await makeRequest('GET', `${BASE_URLS.subcategories}/000000000000000000000000`);
+      if (res.status === 404) console.log(' ✅ Entidad inexistente manejada correctamente');
+      else console.log(` ❌ Respuesta inesperada: ${res.status}`);
+
+      // 4c. ID con formato inválido — CastError debe retornar 404
+      console.log('\n[GET /api/subcategories/id-invalido] Formato de ID incorrecto (404 esperado)');
+      res = await makeRequest('GET', `${BASE_URLS.subcategories}/id-invalido`);
+      if (res.status === 404) console.log(' ✅ CastError manejado: formato inválido retorna 404');
+      else console.log(` ❌ CastError no capturado. Status: ${res.status}`);
+    }
+
+    // =============================
+    // 5. ACTUALIZACIÓN (PUT)
     // =============================
     console.log('\n--- 5. Modificador Dinámico (PUT) ---');
 
@@ -95,20 +119,37 @@ const runTests = async () => {
       name: name + ' (Parchado Automático)'
     }, adminToken);
 
-    if (res.status === 200) console.log(' ✅ Modificador estático aplicado');
-    else console.log(' ❌ Falla aplicando parche al nombre');
+    if (res.status === 200) console.log(' ✅ Parche de nombre aplicado correctamente');
+    else console.log(' ❌ Error al aplicar parche', res.data);
 
     // =============================
-    // 5. PURGA (DELETE)
+    // 6. PURGA (Flujo dos pasos)
     // =============================
-    console.log('\n--- 6. Eliminación y Limpieza (Hard Delete) ---');
+    console.log('\n--- 6. Eliminación y Limpieza (Soft → Hard Delete) ---');
 
+    // Verificar que hard delete sin desactivar retorna 400
+    console.log('[DELETE ?hardDelete=true] Intento prematuro sobre subcategoría activa (400 esperado)');
     res = await makeRequest('DELETE', `${BASE_URLS.subcategories}/${subcategoryId}?hardDelete=true`, null, adminToken);
+    if (res.status === 400) console.log(' ✅ Guard activo: no se puede hard delete sin desactivar primero');
+    else console.log(` ❌ Guard no funcionó. Status: ${res.status}`);
 
+    // Paso 1: desactivar (soft delete)
+    console.log('\n[DELETE] Paso 1 — Desactivando subcategoría...');
+    res = await makeRequest('DELETE', `${BASE_URLS.subcategories}/${subcategoryId}`, null, adminToken);
+    if (res.status === 200) console.log(' ✅ Subcategoría desactivada');
+    else console.log(` ❌ Error al desactivar. Status: ${res.status}`, res.data);
+
+    // Verificar que ya no es accesible (active = false → 404)
+    res = await makeRequest('GET', `${BASE_URLS.subcategories}/${subcategoryId}`);
+    if (res.status === 404) console.log(' ✅ Subcategoría inaccesible tras soft delete');
+
+    // Paso 2: eliminar permanentemente
+    console.log('\n[DELETE ?hardDelete=true] Paso 2 — Eliminando permanentemente...');
+    res = await makeRequest('DELETE', `${BASE_URLS.subcategories}/${subcategoryId}?hardDelete=true`, null, adminToken);
     if (res.status === 200) {
-      console.log(' ✅ Restos eliminados en su totalidad');
+      console.log(' ✅ Subcategoría eliminada permanentemente');
     } else {
-      console.log(' ❌ Restos no pudieron ser purgados satisfactoriamente', res.data);
+      console.log(` ❌ Error en hard delete. Status: ${res.status}`, res.data);
     }
 
   } catch (err) {

@@ -146,7 +146,10 @@ const updateSubcategory = async (req, res) => {
 };
 
 /**
- * Elimina (borrado suave o permanente) una subcategoría por su ID.
+ * Elimina una subcategoría con flujo de dos pasos:
+ *   1. DELETE /api/subcategories/:id           → desactiva (soft delete, active = false)
+ *   2. DELETE /api/subcategories/:id?hardDelete=true → elimina permanentemente (solo si ya inactiva)
+ *
  * @route DELETE /api/subcategories/:id
  * @access Privado (Solo Admin)
  */
@@ -158,17 +161,23 @@ const deleteSubcategory = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Subcategoría no encontrada' });
     }
 
-    // Revisar query string, ej: ?hardDelete=true
     if (req.query.hardDelete === 'true') {
+      // Guardia: la subcategoría debe estar previamente desactivada
+      if (subcategory.active) {
+        return res.status(400).json({
+          success: false,
+          message: 'Debes desactivar la subcategoría antes de eliminarla permanentemente',
+        });
+      }
       await subcategory.deleteOne();
       return res.status(200).json({ success: true, message: 'Subcategoría eliminada permanentemente' });
     }
 
-    // Borrado Suave (Soft Delete) por defecto
+    // Paso 1 — Soft delete: desactivar subcategoría
     subcategory.active = false;
     await subcategory.save();
 
-    res.status(200).json({ success: true, message: 'Subcategoría inhabilitada correctamente' });
+    res.status(200).json({ success: true, message: 'Subcategoría desactivada correctamente' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al eliminar', error: error.message });
   }
