@@ -2,7 +2,8 @@
  * Suite de Pruebas: Módulo de Usuarios
  *
  * Ejecuta transacciones HTTP locales para certificar el
- * flujo de autenticación, obtención de perfiles y autorizaciones (RBAC).
+ * flujo de autenticación, obtención de perfiles y autorizaciones (RBAC),
+ * incluyendo la consulta de usuario por ID desde el panel de administración.
  *
  * @module tests/testUsersModule
  */
@@ -15,20 +16,38 @@ const runTests = async () => {
   console.log('=> Asegúrate de que el servidor esté corriendo en el puerto 3000');
   console.log('==========================================\n');
 
+  let adminToken = null;
   let clientToken = null;
   let testClientId = null;
 
   try {
     // ==========================================
+    // 0. AUTENTICACIÓN DE ADMIN (vía Seeds)
+    // ==========================================
+    console.log('--- 0. Autenticación de Administrador ---');
+
+    let res = await makeRequest('POST', `${BASE_URLS.users}/login`, {
+      email: 'admin@knstore.com',
+      password: 'password123',
+    });
+
+    if (res.status === 200 && res.data.data.token) {
+      adminToken = res.data.data.token;
+      console.log(' ✅ Admin autenticado');
+    } else {
+      console.log(' ⚠️  Admin no disponible (¿corres npm run seed:users?)');
+    }
+
+    // ==========================================
     // 1. REGISTRO Y LOGIN PÚBLICO
     // ==========================================
-    console.log('--- 1. Pruebas Públicas (Auth y Registro) ---');
-    
+    console.log('\n--- 1. Pruebas Públicas (Auth y Registro) ---');
+
     // Generar un correo dinámico para no colisionar con pruebas previas
     const emailClient = `test_client_${Date.now()}@test.com`;
-    
+
     console.log(`[POST /register] Registrando cliente: ${emailClient}`);
-    let res = await makeRequest('POST', `${BASE_URLS.users}/register`, {
+    res = await makeRequest('POST', `${BASE_URLS.users}/register`, {
       name: 'Test',
       last_name: 'Cliente', // Necesario tras la reestructuración del diagrama de clases
       email: emailClient,
@@ -62,7 +81,7 @@ const runTests = async () => {
     // 2. RUTAS PRIVADAS (CLIENTE)
     // ==========================================
     console.log('\n--- 2. Acciones del Cliente (Requiere Token) ---');
-    
+
     console.log('[GET /profile] Obteniendo perfil propio del cliente test');
     res = await makeRequest('GET', `${BASE_URLS.users}/profile`, null, clientToken);
 
@@ -85,10 +104,60 @@ const runTests = async () => {
     }
 
     // ==========================================
-    // 4. LIMPIEZA / ELIMINACIÓN DE CUENTA
+    // 4. CONSULTA POR ID (ADMIN)
+    // GET /api/users/:id
     // ==========================================
-    console.log('\n--- Limpieza ---');
-    
+    console.log('\n--- 4. Consulta de Usuario por ID (Solo Admin) ---');
+
+    if (adminToken && testClientId) {
+      // 4a. Admin obtiene usuario por ID válido — debe retornar 200
+      console.log(`[GET /api/users/${testClientId}] Admin consulta al cliente recién registrado`);
+      res = await makeRequest('GET', `${BASE_URLS.users}/${testClientId}`, null, adminToken);
+
+      if (res.status === 200 && res.data.data._id === testClientId) {
+        console.log(` ✅ Usuario encontrado: ${res.data.data.name} ${res.data.data.last_name} (${res.data.data.role})`);
+      } else {
+        console.log(` ❌ Fallo en consulta por ID. Status: ${res.status}`, res.data);
+      }
+
+      // 4b. Cliente intenta obtener otro usuario por ID — debe retornar 403
+      console.log(`\n[GET /api/users/${testClientId}] Cliente intenta acceder (403 esperado)`);
+      res = await makeRequest('GET', `${BASE_URLS.users}/${testClientId}`, null, clientToken);
+
+      if (res.status === 403) {
+        console.log(' ✅ RBAC activo: Cliente no puede consultar usuarios por ID');
+      } else {
+        console.log(` ❌ Fallo en protección RBAC. Status: ${res.status}`);
+      }
+
+      // 4c. ID con formato inválido — debe retornar 404
+      console.log('\n[GET /api/users/id-invalido] ID con formato incorrecto (404 esperado)');
+      res = await makeRequest('GET', `${BASE_URLS.users}/id-invalido`, null, adminToken);
+
+      if (res.status === 404) {
+        console.log(' ✅ CastError manejado: ID inválido retorna 404');
+      } else {
+        console.log(` ❌ Error inesperado para ID inválido. Status: ${res.status}`);
+      }
+
+      // 4d. ID válido pero inexistente — debe retornar 404
+      console.log('\n[GET /api/users/000000000000000000000000] ObjectId inexistente (404 esperado)');
+      res = await makeRequest('GET', `${BASE_URLS.users}/000000000000000000000000`, null, adminToken);
+
+      if (res.status === 404) {
+        console.log(' ✅ Null entity exception manejada correctamente');
+      } else {
+        console.log(` ❌ Respuesta inesperada para entidad inexistente. Status: ${res.status}`);
+      }
+    } else {
+      console.log(' ⚠️  Sección omitida: se requiere adminToken y testClientId');
+    }
+
+    // ==========================================
+    // 5. LIMPIEZA / ELIMINACIÓN DE CUENTA
+    // ==========================================
+    console.log('\n--- 5. Limpieza ---');
+
     console.log('[DELETE /profile] Cliente borrando su propia cuenta (Soft / Hard Delete)');
     res = await makeRequest('DELETE', `${BASE_URLS.users}/profile`, null, clientToken);
 

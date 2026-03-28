@@ -19,6 +19,7 @@ const {
   getUserProfile,
   deleteProfile,
   getUsers,
+  getUserById,
   createUser,
   updateUser,
   deleteUser,
@@ -58,6 +59,7 @@ router.route('/')
   .post(validateCreateUser, createUser);
 
 router.route('/:id')
+  .get(getUserById)
   .put(validateUpdateUser, updateUser)
   .delete(deleteUser);
 

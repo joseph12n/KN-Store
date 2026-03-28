@@ -26,23 +26,29 @@ const loginUser = async (req, res) => {
     // Verificar si el usuario existe (buscando por email e incluyendo el password para comparar)
     const user = await User.findOne({ email }).select('+password');
 
-    if (user && (await user.matchPassword(password))) {
-      // El método .toJSON del modelo elimina el password antes de enviarlo
-      res.json({
-        success: true,
-        data: {
-          _id: user._id,
-          name: user.name,
-          last_name: user.last_name,
-          email: user.email,
-          role: user.role,
-          token: generateToken(user._id),
-        },
-        message: 'Autenticación exitosa',
-      });
-    } else {
-      res.status(401).json({ success: false, message: 'Correo o contraseña incorrectos' });
+    // Credenciales inválidas
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ success: false, message: 'Correo o contraseña incorrectos' });
     }
+
+    // Cuenta desactivada (soft delete aplicado por admin)
+    if (!user.active) {
+      return res.status(401).json({ success: false, message: 'Esta cuenta ha sido desactivada' });
+    }
+
+    // El método .toJSON del modelo elimina el password antes de enviarlo
+    res.json({
+      success: true,
+      data: {
+        _id: user._id,
+        name: user.name,
+        last_name: user.last_name,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user._id),
+      },
+      message: 'Autenticación exitosa',
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error en el servidor', error: error.message });
   }
@@ -161,6 +167,33 @@ const deleteProfile = async (req, res) => {
 // ==================== RUTAS DE ADMINISTRACIÓN (ADMIN ONLY) ====================
 
 /**
+ * Obtiene un usuario específico por su ID de MongoDB.
+ * Útil para vistas de detalle en el panel de administración.
+ * @route GET /api/users/:id
+ * @access Privado (Solo Admin)
+ */
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (user) {
+      res.json({
+        success: true,
+        data: user,
+      });
+    } else {
+      res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    }
+  } catch (error) {
+    // CastError ocurre si el ID no tiene el formato válido de ObjectId de MongoDB
+    if (error.name === 'CastError') {
+      return res.status(404).json({ success: false, message: 'El ID de usuario no es válido' });
+    }
+    res.status(500).json({ success: false, message: 'Error en el servidor', error: error.message });
+  }
+};
+
+/**
  * Obtiene todos los usuarios del sistema.
  * @route GET /api/users
  * @access Privado (Solo Admin)
@@ -250,7 +283,10 @@ const updateUser = async (req, res) => {
 };
 
 /**
- * Elimina un usuario por su ID.
+ * Elimina un usuario con flujo de dos pasos:
+ *   1. DELETE /api/users/:id           → desactiva (soft delete, active = false)
+ *   2. DELETE /api/users/:id?hardDelete=true → elimina permanentemente (solo si ya inactivo)
+ *
  * @route DELETE /api/users/:id
  * @access Privado (Solo Admin)
  */
@@ -258,17 +294,32 @@ const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 
-    if (user) {
-      // Evitar que el admin se borre a sí mismo
-      if (user._id.equals(req.user._id)) {
-        return res.status(400).json({ success: false, message: 'No puedes eliminar tu propia cuenta de administrador' });
-      }
-
-      await User.deleteOne({ _id: user._id });
-      res.json({ success: true, message: 'Usuario eliminado exitosamente' });
-    } else {
-      res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
     }
+
+    // Evitar que el admin se borre a sí mismo
+    if (user._id.equals(req.user._id)) {
+      return res.status(400).json({ success: false, message: 'No puedes eliminar tu propia cuenta de administrador' });
+    }
+
+    if (req.query.hardDelete === 'true') {
+      // Guardia: el usuario debe estar previamente desactivado
+      if (user.active) {
+        return res.status(400).json({
+          success: false,
+          message: 'Debes desactivar el usuario antes de eliminarlo permanentemente',
+        });
+      }
+      await User.deleteOne({ _id: user._id });
+      return res.json({ success: true, message: 'Usuario eliminado permanentemente' });
+    }
+
+    // Paso 1 — Soft delete: desactivar cuenta
+    user.active = false;
+    await user.save();
+
+    res.json({ success: true, message: 'Usuario desactivado exitosamente' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error en el servidor', error: error.message });
   }
@@ -283,6 +334,7 @@ module.exports = {
   getUserProfile,
   deleteProfile,
   getUsers,
+  getUserById,
   createUser,
   updateUser,
   deleteUser,

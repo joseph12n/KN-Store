@@ -63,6 +63,12 @@ const userSchema = new mongoose.Schema(
       },
       default: 'Client',
     },
+
+    // Estado de la cuenta (false = desactivada / soft delete)
+    active: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true, // Agrega createdAt y updatedAt automáticamente

@@ -39,6 +39,11 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ success: false, message: 'El usuario asociado al token ya no existe' });
       }
 
+      // Si la cuenta fue desactivada (soft delete), bloquear acceso
+      if (!req.user.active) {
+        return res.status(401).json({ success: false, message: 'Esta cuenta ha sido desactivada' });
+      }
+
       next();
     } catch (error) {
       console.error('Error verificando token:', error.message);
