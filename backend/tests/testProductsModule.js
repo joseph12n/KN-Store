@@ -117,21 +117,48 @@ const runTests = async () => {
     if (res.status === 403) console.log(' ✅ RBAC Cliente contuvo el ataque.');
 
     // ==========================================
-    // 2. EXTRACCIONES PUBLICAS Y LECTURAS
+    // 2. EXTRACCIONES PÚBLICAS Y LECTURAS
     // ==========================================
     console.log('\n--- 2. Obtener Productos ---');
 
+    // 2a. Listado general paginado
     res = await makeRequest('GET', BASE_URLS.products);
-    if (res.status === 200) console.log(` [GET Lista] Colección general validada. Elementos: ${res.data.data.length}`);
+    if (res.status === 200) console.log(` ✅ [GET Lista] Colección general. Elementos: ${res.data.data.length}`);
+    else console.log(` ❌ [GET Lista] Error al obtener productos. Status: ${res.status}`);
+
+    // 2b. Consulta por ID
+    console.log('\n--- 2b. Consulta de Producto por ID ---');
 
     if (productId) {
+      // ID válido y existente — debe retornar 200
+      console.log(`[GET /api/products/${productId}] ID válido recién creado`);
       res = await makeRequest('GET', `${BASE_URLS.products}/${productId}`);
-      if (res.status === 200) console.log(` [GET ID] Encontrado: ${res.data.data.name}`);
+
+      if (res.status === 200 && res.data.data._id === productId) {
+        console.log(` ✅ Producto encontrado: "${res.data.data.name}"`);
+      } else {
+        console.log(` ❌ Fallo en consulta por ID. Status: ${res.status}`, res.data);
+      }
+
+      // ObjectId válido pero inexistente — debe retornar 404
+      console.log('\n[GET /api/products/000000000000000000000000] ObjectId inexistente (404 esperado)');
+      res = await makeRequest('GET', `${BASE_URLS.products}/000000000000000000000000`);
+      if (res.status === 404) console.log(' ✅ Entidad inexistente manejada correctamente');
+      else console.log(` ❌ Respuesta inesperada: ${res.status}`);
+
+      // ID con formato inválido — CastError debe retornar 404
+      console.log('\n[GET /api/products/id-invalido] Formato de ID incorrecto (404 esperado)');
+      res = await makeRequest('GET', `${BASE_URLS.products}/id-invalido`);
+      if (res.status === 404) console.log(' ✅ CastError manejado: formato inválido retorna 404');
+      else console.log(` ❌ CastError no capturado. Status: ${res.status}`);
     }
 
+    // 2c. Consulta por Slug
     if (productSlug) {
+      console.log(`\n[GET /api/products/slug/${productSlug}] Búsqueda por slug`);
       res = await makeRequest('GET', `${BASE_URLS.products}/slug/${productSlug}`);
-      if (res.status === 200) console.log(` [GET Slug] Match dinámico correcto: ${res.data.data.name}`);
+      if (res.status === 200) console.log(` ✅ [GET Slug] Producto encontrado: "${res.data.data.name}"`);
+      else console.log(` ❌ [GET Slug] Fallo al buscar por slug. Status: ${res.status}`);
     }
 
     // ==========================================
@@ -152,18 +179,38 @@ const runTests = async () => {
     if (res.status === 200) console.log(` ✅ Índices de búsqueda respondiendo`);
 
     // ==========================================
-    // 4. ELIMINACIÓN
+    // 4. ELIMINACIÓN (Flujo dos pasos)
     // ==========================================
-    console.log('\n--- 4. Eliminación de Producto ---');
+    console.log('\n--- 4. Eliminación de Producto (Soft → Hard Delete) ---');
 
     if (productId) {
-      console.log(`\n[DELETE /api/products/${productId}] Provider intenta (403)`);
+      // RBAC: Provider no puede eliminar
+      console.log(`\n[DELETE] Provider intenta eliminar (403 esperado)`);
       res = await makeRequest('DELETE', `${BASE_URLS.products}/${productId}`, null, providerToken);
-      if (res.status === 403) console.log(' ✅ Provider RBAC actuando');
+      if (res.status === 403) console.log(' ✅ RBAC Provider bloqueado correctamente');
+      else console.log(` ❌ RBAC no funcionó. Status: ${res.status}`);
 
-      console.log(`\n[DELETE /api/products/${productId}?hardDelete=true] Admin Hard Delete`);
+      // Guard: hard delete sin desactivar → 400
+      console.log(`\n[DELETE ?hardDelete=true] Intento prematuro sobre producto activo (400 esperado)`);
       res = await makeRequest('DELETE', `${BASE_URLS.products}/${productId}?hardDelete=true`, null, adminToken);
-      if (res.status === 200) console.log(' ✅ Operación de limpieza quirúrgica completa');
+      if (res.status === 400) console.log(' ✅ Guard activo: no se puede hard delete sin desactivar primero');
+      else console.log(` ❌ Guard no funcionó. Status: ${res.status}`);
+
+      // Paso 1: desactivar (soft delete)
+      console.log(`\n[DELETE] Paso 1 — Desactivando producto...`);
+      res = await makeRequest('DELETE', `${BASE_URLS.products}/${productId}`, null, adminToken);
+      if (res.status === 200) console.log(' ✅ Producto desactivado');
+      else console.log(` ❌ Error al desactivar. Status: ${res.status}`);
+
+      // Verificar que ya no es accesible (active = false → 404)
+      res = await makeRequest('GET', `${BASE_URLS.products}/${productId}`);
+      if (res.status === 404) console.log(' ✅ Producto inaccesible tras soft delete');
+
+      // Paso 2: eliminar permanentemente
+      console.log(`\n[DELETE ?hardDelete=true] Paso 2 — Eliminando permanentemente...`);
+      res = await makeRequest('DELETE', `${BASE_URLS.products}/${productId}?hardDelete=true`, null, adminToken);
+      if (res.status === 200) console.log(' ✅ Producto eliminado permanentemente');
+      else console.log(` ❌ Error en hard delete. Status: ${res.status}`);
     }
 
   } catch (err) {

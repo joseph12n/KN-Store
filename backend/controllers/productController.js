@@ -295,7 +295,10 @@ const updateProduct = async (req, res) => {
 };
 
 /**
- * Elimina un producto del sistema. Soporta borrado suave o permanente (?hardDelete=true).
+ * Elimina un producto con flujo de dos pasos:
+ *   1. DELETE /api/products/:id           → desactiva (soft delete, active = false)
+ *   2. DELETE /api/products/:id?hardDelete=true → elimina permanentemente (solo si ya inactivo)
+ *
  * @route DELETE /api/products/:id
  * @access Privado (Admin Only)
  */
@@ -308,10 +311,18 @@ const deleteProduct = async (req, res) => {
     }
 
     if (req.query.hardDelete === 'true') {
+      // Guardia: el producto debe estar previamente desactivado
+      if (product.active) {
+        return res.status(400).json({
+          success: false,
+          message: 'Debes desactivar el producto antes de eliminarlo permanentemente',
+        });
+      }
       await product.deleteOne();
       return res.status(200).json({ success: true, message: 'Producto eliminado permanentemente' });
     }
 
+    // Paso 1 — Soft delete: desactivar producto
     product.active = false;
     await product.save();
 
