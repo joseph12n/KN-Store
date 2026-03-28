@@ -32,6 +32,12 @@ const categorySchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+
+    // Estado de la categoría (false = desactivada / soft delete)
+    active: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true, // Agrega createdAt y updatedAt

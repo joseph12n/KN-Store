@@ -18,8 +18,9 @@ const Category = require('../models/Category');
  */
 const getCategories = async (req, res) => {
   try {
-    const categories = await Category.find({});
-    
+    // Solo retornar categorías activas en la vista pública
+    const categories = await Category.find({ active: true });
+
     res.json({
       success: true,
       data: categories,
@@ -38,15 +39,19 @@ const getCategoryById = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
 
-    if (category) {
-      res.json({
-        success: true,
-        data: category,
-      });
-    } else {
-      res.status(404).json({ success: false, message: 'Categoría no encontrada' });
+    if (!category || !category.active) {
+      return res.status(404).json({ success: false, message: 'Categoría no encontrada o inactiva' });
     }
+
+    res.json({
+      success: true,
+      data: category,
+    });
   } catch (error) {
+    // CastError ocurre si el ID no tiene el formato válido de ObjectId de MongoDB
+    if (error.name === 'CastError') {
+      return res.status(404).json({ success: false, message: 'El ID de categoría no es válido' });
+    }
     res.status(500).json({ success: false, message: 'Error al obtener la categoría', error: error.message });
   }
 };
@@ -117,8 +122,10 @@ const updateCategory = async (req, res) => {
 };
 
 /**
- * Eliminar una categoría por su ID.
- * Solo puede ser ejecutado por un Admin.
+ * Elimina una categoría con flujo de dos pasos:
+ *   1. DELETE /api/categories/:id           → desactiva (soft delete, active = false)
+ *   2. DELETE /api/categories/:id?hardDelete=true → elimina permanentemente (solo si ya inactiva)
+ *
  * @route DELETE /api/categories/:id
  * @access Privado (Solo Admin)
  */
@@ -126,12 +133,27 @@ const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
 
-    if (category) {
-      await Category.deleteOne({ _id: req.params.id });
-      res.json({ success: true, message: 'Categoría eliminada exitosamente' });
-    } else {
-      res.status(404).json({ success: false, message: 'Categoría no encontrada' });
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Categoría no encontrada' });
     }
+
+    if (req.query.hardDelete === 'true') {
+      // Guardia: la categoría debe estar previamente desactivada
+      if (category.active) {
+        return res.status(400).json({
+          success: false,
+          message: 'Debes desactivar la categoría antes de eliminarla permanentemente',
+        });
+      }
+      await Category.deleteOne({ _id: req.params.id });
+      return res.json({ success: true, message: 'Categoría eliminada permanentemente' });
+    }
+
+    // Paso 1 — Soft delete: desactivar categoría
+    category.active = false;
+    await category.save();
+
+    res.json({ success: true, message: 'Categoría desactivada correctamente' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al eliminar la categoría', error: error.message });
   }

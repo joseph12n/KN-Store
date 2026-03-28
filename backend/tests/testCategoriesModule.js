@@ -143,33 +143,76 @@ const runTests = async () => {
     if (res.status === 401) console.log(' ✅ 401: Anonimato restringido');
 
     // ==========================================
-    // 5. VALIDACIONES LÓGICAS (express-validator)
+    // 5. CONSULTA POR ID (GET /:id)
     // ==========================================
-    console.log('\n--- 5. Validaciones (Defectos forzados) ---');
+    console.log('\n--- 5. Consulta de Categoría por ID ---');
+
+    if (createdCategoryId) {
+      // 5a. ID válido y existente — debe retornar 200
+      console.log(`[GET /api/categories/${createdCategoryId}] Consulta por ID válido (público)`);
+      res = await makeRequest('GET', `${BASE_URLS.categories}/${createdCategoryId}`);
+
+      if (res.status === 200 && res.data.data._id === createdCategoryId) {
+        console.log(` ✅ Categoría encontrada: "${res.data.data.name}"`);
+      } else {
+        console.log(` ❌ Fallo en consulta por ID. Status: ${res.status}`, res.data);
+      }
+    }
+
+    // 5b. ID válido pero inexistente — debe retornar 404
+    console.log('[GET /api/categories/000000000000000000000000] Entidad inexistente (404 esperado)');
+    res = await makeRequest('GET', `${BASE_URLS.categories}/000000000000000000000000`);
+    if (res.status === 404) console.log(' ✅ 404: Null entity exception manejada');
+    else console.log(` ❌ Respuesta inesperada: ${res.status}`);
+
+    // ==========================================
+    // 6. VALIDACIONES LÓGICAS (express-validator)
+    // ==========================================
+    console.log('\n--- 6. Validaciones (Defectos forzados) ---');
 
     console.log('[POST /api/categories] Falta Título');
     res = await makeRequest('POST', BASE_URLS.categories, { description: 'Missing' }, adminToken);
     if (res.status === 400) console.log(' ✅ 400: Filtro de estructura activa.');
 
-    console.log('[GET /api/categories/000000000000000000000000] Entidad inexistente');
-    res = await makeRequest('GET', `${BASE_URLS.categories}/000000000000000000000000`);
-    if (res.status === 404) console.log(' ✅ 404: Null entity exception manejada');
-
     // ==========================================
-    // 6. PURGA / LIMPIEZA
+    // 7. PURGA / LIMPIEZA (Flujo dos pasos)
     // ==========================================
-    console.log('\n--- 6. Limpieza Total ---');
+    console.log('\n--- 7. Limpieza Total (Soft → Hard Delete) ---');
 
     if (createdCategoryId) {
-      console.log(`[DELETE] Purgando instancia Admin...`);
+      // Verificar que hard delete sin desactivar retorna 400
+      console.log(`[DELETE ?hardDelete=true] Intento prematuro sobre categoría activa (400 esperado)`);
+      res = await makeRequest('DELETE', `${BASE_URLS.categories}/${createdCategoryId}?hardDelete=true`, null, adminToken);
+      if (res.status === 400) console.log(' ✅ Guard activo: no se puede hard delete sin desactivar primero');
+      else console.log(` ❌ Guard no funcionó. Status: ${res.status}`);
+
+      // Paso 1: desactivar (soft delete)
+      console.log(`[DELETE] Paso 1 — Desactivando categoría Admin...`);
       res = await makeRequest('DELETE', `${BASE_URLS.categories}/${createdCategoryId}`, null, adminToken);
-      if (res.status === 200) console.log(' ✅ Limpio');
+      if (res.status === 200) console.log(' ✅ Categoría desactivada');
+      else console.log(` ❌ Error al desactivar. Status: ${res.status}`);
+
+      // Verificar que ya no es accesible públicamente
+      res = await makeRequest('GET', `${BASE_URLS.categories}/${createdCategoryId}`);
+      if (res.status === 404) console.log(' ✅ Categoría inaccesible tras soft delete');
+
+      // Paso 2: eliminar permanentemente
+      console.log(`[DELETE ?hardDelete=true] Paso 2 — Eliminando permanentemente...`);
+      res = await makeRequest('DELETE', `${BASE_URLS.categories}/${createdCategoryId}?hardDelete=true`, null, adminToken);
+      if (res.status === 200) console.log(' ✅ Eliminación permanente completada');
+      else console.log(` ❌ Error en hard delete. Status: ${res.status}`);
     }
 
     if (createdByProviderId) {
-      console.log(`[DELETE] Purgando instancia Provider desde cuenta Admin...`);
+      // Paso 1: desactivar
+      console.log(`\n[DELETE] Paso 1 — Desactivando categoría de Provider...`);
       res = await makeRequest('DELETE', `${BASE_URLS.categories}/${createdByProviderId}`, null, adminToken);
-      if (res.status === 200) console.log(' ✅ Limpio');
+      if (res.status === 200) console.log(' ✅ Categoría desactivada');
+
+      // Paso 2: eliminar permanentemente
+      console.log(`[DELETE ?hardDelete=true] Paso 2 — Eliminando permanentemente...`);
+      res = await makeRequest('DELETE', `${BASE_URLS.categories}/${createdByProviderId}?hardDelete=true`, null, adminToken);
+      if (res.status === 200) console.log(' ✅ Eliminación permanente completada');
     }
 
   } catch (err) {
