@@ -1,45 +1,26 @@
 {
   "info": {
-    "name": "KN-Store - Users Module",
-    "description": "Colección de Postman para probar el módulo de Usuarios (Autenticación, Autorización por roles y CRUD).",
+    "name": "KN-Store - QA Roles y Permisos (4 Modulos)",
+    "description": "Coleccion organizada por rol y modulo para probar permisos de Admin, Provider y Client en Users, Categories, Subcategories y Products.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "1. Public (Auth & Registration)",
+      "name": "0. Setup",
       "item": [
         {
-          "name": "Register Client",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"Juan Cliente\",\n    \"email\": \"cliente@gmail.com\",\n    \"password\": \"123456\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/users/register",
-              "host": [ "{{baseUrl}}" ],
-              "path": [ "api", "users", "register" ]
-            }
-          }
-        },
-        {
-          "name": "Login User",
+          "name": "Login Admin",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var data = pm.response.json();",
-                  "    pm.environment.set('token', data.token);",
-                  "    pm.environment.set('role', data.role);",
-                  "}"
-                ],
-                "type": "text/javascript"
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', json.data.token);",
+                  "pm.collectionVariables.set('adminId', json.data._id);"
+                ]
               }
             }
           ],
@@ -50,134 +31,2224 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"cliente@gmail.com\",\n    \"password\": \"123456\"\n}"
+              "raw": "{\n  \"email\": \"admin@knstore.com\",\n  \"password\": \"password123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/users/login",
-              "host": [ "{{baseUrl}}" ],
-              "path": [ "api", "users", "login" ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "2. Client Actions",
-      "item": [
-        {
-          "name": "Get Own Profile",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/users/profile",
-              "host": [ "{{baseUrl}}" ],
-              "path": [ "api", "users", "profile" ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "login"]
             }
           }
         },
         {
-          "name": "Delete Own Profile",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/users/profile",
-              "host": [ "{{baseUrl}}" ],
-              "path": [ "api", "users", "profile" ]
+          "name": "Login Provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('providerToken', json.data.token);",
+                  "pm.collectionVariables.set('providerId', json.data._id);"
+                ]
+              }
             }
-          }
-        }
-      ]
-    },
-    {
-      "name": "3. Admin & Provider Actions",
-      "item": [
-        {
-          "name": "Get All Users",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/users",
-              "host": [ "{{baseUrl}}" ],
-              "path": [ "api", "users" ]
-            }
-          }
-        },
-        {
-          "name": "Create Provider (Or Admin)",
+          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Pedro Proveedor\",\n    \"email\": \"proveedor@gmail.com\",\n    \"password\": \"123456\",\n    \"role\": \"Provider\"\n}"
+              "raw": "{\n  \"email\": \"proveedor@knstore.com\",\n  \"password\": \"password123\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users",
-              "host": [ "{{baseUrl}}" ],
-              "path": [ "api", "users" ]
+              "raw": "{{baseUrl}}/api/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "login"]
             }
           }
         },
         {
-          "name": "Update User",
+          "name": "Login Client",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('clientToken', json.data.token);",
+                  "pm.collectionVariables.set('clientId', json.data._id);"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "PUT",
+            "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Juan Cliente Editado\",\n    \"role\": \"Client\"\n}"
+              "raw": "{\n  \"email\": \"cliente@gmail.com\",\n  \"password\": \"password123\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{userId}}",
-              "host": [ "{{baseUrl}}" ],
-              "path": [ "api", "users", "{{userId}}" ]
+              "raw": "{{baseUrl}}/api/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "login"]
             }
           }
         },
         {
-          "name": "Delete Specific User (Admin Only)",
+          "name": "Publico lista categorias (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
           "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
+            "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{userId}}",
-              "host": [ "{{baseUrl}}" ],
-              "path": [ "api", "users", "{{userId}}" ]
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
             }
           }
+        },
+        {
+          "name": "Publico lista subcategorias (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/subcategories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subcategories"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Admin",
+      "item": [
+        {
+          "name": "users",
+          "item": [
+            {
+              "name": "Admin lista usuarios (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users"]
+                }
+              }
+            },
+            {
+              "name": "Admin crea usuario QA (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('qaCreatedUserId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA\",\n  \"last_name\": \"Admin\",\n  \"email\": \"qa.admin.user.{{$timestamp}}@knstore.com\",\n  \"password\": \"password123\",\n  \"role\": \"Provider\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users"]
+                }
+              }
+            },
+            {
+              "name": "Admin actualiza usuario QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Admin User Editado\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/{{qaCreatedUserId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "{{qaCreatedUserId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin desactiva usuario QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/{{qaCreatedUserId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "{{qaCreatedUserId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin elimina usuario QA permanente (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/{{qaCreatedUserId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "{{qaCreatedUserId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "categories",
+          "item": [
+            {
+              "name": "Admin crea categoria QA (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('adminCategoryId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Admin Category {{$timestamp}}\",\n  \"description\": \"Categoria creada por admin para pruebas\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories"]
+                }
+              }
+            },
+            {
+              "name": "Admin actualiza categoria QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Categoria admin actualizada\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{adminCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{adminCategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin desactiva categoria QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{adminCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{adminCategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin elimina categoria QA permanente (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{adminCategoryId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{adminCategoryId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "subcategories",
+          "item": [
+            {
+              "name": "Admin crea categoria soporte subcategoria (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('adminSubCategoryParentId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Parent Admin {{$timestamp}}\",\n  \"description\": \"Categoria para colgar subcategoria admin\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories"]
+                }
+              }
+            },
+            {
+              "name": "Admin crea subcategoria QA (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('adminSubcategoryId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Admin Subcategory {{$timestamp}}\",\n  \"description\": \"Subcategoria creada por admin para pruebas\",\n  \"category\": \"{{adminSubCategoryParentId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories"]
+                }
+              }
+            },
+            {
+              "name": "Admin actualiza subcategoria QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Subcategoria admin actualizada\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{adminSubcategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{adminSubcategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin desactiva subcategoria QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{adminSubcategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{adminSubcategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin elimina subcategoria QA permanente (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{adminSubcategoryId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{adminSubcategoryId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria soporte subcategoria (soft)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{adminSubCategoryParentId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{adminSubCategoryParentId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria soporte subcategoria (hard)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{adminSubCategoryParentId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{adminSubCategoryParentId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "products",
+          "item": [
+            {
+              "name": "Admin crea categoria soporte producto (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('adminProductCategoryId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Product Admin Category {{$timestamp}}\",\n  \"description\": \"Categoria soporte para producto admin\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories"]
+                }
+              }
+            },
+            {
+              "name": "Admin crea subcategoria soporte producto (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('adminProductSubcategoryId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Product Admin Subcategory {{$timestamp}}\",\n  \"description\": \"Subcategoria soporte para producto admin\",\n  \"category\": \"{{adminProductCategoryId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories"]
+                }
+              }
+            },
+            {
+              "name": "Admin crea producto QA (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('adminProductId', json.data._id);",
+                      "pm.collectionVariables.set('adminProductSlug', json.data.slug);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Admin Product {{$timestamp}}\",\n  \"sku\": \"QA-ADMIN-SKU-{{$timestamp}}\",\n  \"description\": \"Producto creado por admin para pruebas RBAC\",\n  \"brand\": \"KN-QA\",\n  \"price\": 120,\n  \"costPrice\": 80,\n  \"stock\": 10,\n  \"category\": \"{{adminProductCategoryId}}\",\n  \"subcategory\": \"{{adminProductSubcategoryId}}\",\n  \"provider\": \"{{providerId}}\",\n  \"tags\": [\"qa\", \"admin\"],\n  \"isAvailable\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products"]
+                }
+              }
+            },
+            {
+              "name": "Admin actualiza producto QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"price\": 130,\n  \"stock\": 15\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{adminProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{adminProductId}}"]
+                }
+              }
+            },
+            {
+              "name": "Publico obtiene producto admin por slug (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/slug/{{adminProductSlug}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "slug", "{{adminProductSlug}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin desactiva producto QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{adminProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{adminProductId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin elimina producto QA permanente (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{adminProductId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{adminProductId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia subcategoria soporte producto (soft)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{adminProductSubcategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{adminProductSubcategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia subcategoria soporte producto (hard)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{adminProductSubcategoryId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{adminProductSubcategoryId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria soporte producto (soft)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{adminProductCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{adminProductCategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria soporte producto (hard)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{adminProductCategoryId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{adminProductCategoryId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Provider",
+      "item": [
+        {
+          "name": "users",
+          "item": [
+            {
+              "name": "Provider obtiene perfil propio (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "profile"]
+                }
+              }
+            },
+            {
+              "name": "Provider intenta listar usuarios (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "categories",
+          "item": [
+            {
+              "name": "Provider crea categoria QA (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('providerCategoryId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Provider Category {{$timestamp}}\",\n  \"description\": \"Categoria creada por provider\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories"]
+                }
+              }
+            },
+            {
+              "name": "Provider actualiza categoria QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Provider actualizado\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{providerCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{providerCategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Provider intenta eliminar categoria (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{providerCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{providerCategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria provider (soft)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{providerCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{providerCategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria provider (hard)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{providerCategoryId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{providerCategoryId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "subcategories",
+          "item": [
+            {
+              "name": "Provider crea categoria soporte subcategoria (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('providerSubParentCategoryId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Provider Parent {{$timestamp}}\",\n  \"description\": \"Categoria soporte para subcategoria provider\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories"]
+                }
+              }
+            },
+            {
+              "name": "Provider crea subcategoria QA (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('providerSubcategoryId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Provider Subcategory {{$timestamp}}\",\n  \"description\": \"Subcategoria creada por provider para pruebas\",\n  \"category\": \"{{providerSubParentCategoryId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories"]
+                }
+              }
+            },
+            {
+              "name": "Provider actualiza subcategoria QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Provider subcategoria actualizada\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{providerSubcategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{providerSubcategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Provider intenta eliminar subcategoria (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{providerSubcategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{providerSubcategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia subcategoria provider (soft)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{providerSubcategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{providerSubcategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia subcategoria provider (hard)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{providerSubcategoryId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{providerSubcategoryId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria soporte provider subcategoria (soft)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{providerSubParentCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{providerSubParentCategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria soporte provider subcategoria (hard)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{providerSubParentCategoryId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{providerSubParentCategoryId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "products",
+          "item": [
+            {
+              "name": "Provider crea categoria soporte producto (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('providerProductCategoryId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Provider Product Category {{$timestamp}}\",\n  \"description\": \"Categoria soporte para producto provider\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories"]
+                }
+              }
+            },
+            {
+              "name": "Provider crea subcategoria soporte producto (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('providerProductSubcategoryId', json.data._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Provider Product Subcategory {{$timestamp}}\",\n  \"description\": \"Subcategoria soporte para producto provider\",\n  \"category\": \"{{providerProductCategoryId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories"]
+                }
+              }
+            },
+            {
+              "name": "Provider crea producto QA (201)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                      "const json = pm.response.json();",
+                      "pm.collectionVariables.set('providerProductId', json.data._id);",
+                      "pm.collectionVariables.set('providerProductSlug', json.data.slug);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"QA Provider Product {{$timestamp}}\",\n  \"sku\": \"QA-PROV-SKU-{{$timestamp}}\",\n  \"description\": \"Producto creado por provider para pruebas RBAC\",\n  \"brand\": \"KN-QA\",\n  \"price\": 150,\n  \"costPrice\": 100,\n  \"stock\": 20,\n  \"category\": \"{{providerProductCategoryId}}\",\n  \"subcategory\": \"{{providerProductSubcategoryId}}\",\n  \"provider\": \"{{providerId}}\",\n  \"tags\": [\"qa\", \"provider\"],\n  \"isAvailable\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products"]
+                }
+              }
+            },
+            {
+              "name": "Provider actualiza producto QA (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"price\": 170,\n  \"stock\": 25\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{providerProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{providerProductId}}"]
+                }
+              }
+            },
+            {
+              "name": "Provider intenta eliminar producto (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{providerProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{providerProductId}}"]
+                }
+              }
+            },
+            {
+              "name": "Publico obtiene producto provider por slug (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/slug/{{providerProductSlug}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "slug", "{{providerProductSlug}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin desactiva producto provider (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{providerProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{providerProductId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin elimina producto provider permanente (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{providerProductId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{providerProductId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia subcategoria soporte producto provider (soft)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{providerProductSubcategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{providerProductSubcategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia subcategoria soporte producto provider (hard)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{providerProductSubcategoryId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{providerProductSubcategoryId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria soporte producto provider (soft)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{providerProductCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{providerProductCategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Admin limpia categoria soporte producto provider (hard)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{providerProductCategoryId}}?hardDelete=true",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{providerProductCategoryId}}"],
+                  "query": [
+                    { "key": "hardDelete", "value": "true" }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Client",
+      "item": [
+        {
+          "name": "users",
+          "item": [
+            {
+              "name": "Client obtiene perfil propio (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "profile"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta listar usuarios (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta crear usuario (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Sin Permiso\",\n  \"last_name\": \"Client\",\n  \"email\": \"client.no.permission.{{$timestamp}}@knstore.com\",\n  \"password\": \"password123\",\n  \"role\": \"Provider\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta actualizar usuario admin (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"No autorizado\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/{{adminId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "{{adminId}}"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta eliminar usuario admin (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/{{adminId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "{{adminId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "categories",
+          "item": [
+            {
+              "name": "Client obtiene categoria referencia (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test('Hay categorias publicas', function () { pm.expect(Array.isArray(json.data) && json.data.length > 0).to.eql(true); });",
+                      "pm.collectionVariables.set('clientRefCategoryId', json.data[0]._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta crear categoria (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Client no puede crear {{$timestamp}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta editar categoria (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Edicion no permitida por cliente\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{clientRefCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{clientRefCategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta eliminar categoria (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/{{clientRefCategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "categories", "{{clientRefCategoryId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "subcategories",
+          "item": [
+            {
+              "name": "Client obtiene subcategoria referencia (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test('Hay subcategorias publicas', function () { pm.expect(Array.isArray(json.data) && json.data.length > 0).to.eql(true); });",
+                      "pm.collectionVariables.set('clientRefSubcategoryId', json.data[0]._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta crear subcategoria (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Client no puede subcategoria {{$timestamp}}\",\n  \"description\": \"Intento bloqueado por permisos de cliente\",\n  \"category\": \"{{clientRefCategoryId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta editar subcategoria (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"No autorizado cliente\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{clientRefSubcategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{clientRefSubcategoryId}}"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta eliminar subcategoria (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/subcategories/{{clientRefSubcategoryId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "subcategories", "{{clientRefSubcategoryId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "products",
+          "item": [
+            {
+              "name": "Client obtiene producto referencia (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                      "const json = pm.response.json();",
+                      "pm.test('Hay productos publicos', function () { pm.expect(Array.isArray(json.data) && json.data.length > 0).to.eql(true); });",
+                      "pm.collectionVariables.set('clientRefProductId', json.data[0]._id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products"]
+                }
+              }
+            },
+            {
+              "name": "Client obtiene producto por id (200)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{clientRefProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{clientRefProductId}}"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta crear producto (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Client No Product {{$timestamp}}\",\n  \"sku\": \"CLIENT-NO-SKU-{{$timestamp}}\",\n  \"description\": \"Cliente sin permisos para crear producto\",\n  \"brand\": \"KN\",\n  \"price\": 10,\n  \"costPrice\": 5,\n  \"stock\": 1,\n  \"category\": \"{{clientRefCategoryId}}\",\n  \"subcategory\": \"{{clientRefSubcategoryId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta editar producto (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"price\": 999\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{clientRefProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{clientRefProductId}}"]
+                }
+              }
+            },
+            {
+              "name": "Client intenta eliminar producto (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status 403', function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{clientToken}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/{{clientRefProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "{{clientRefProductId}}"]
+                }
+              }
+            }
+          ]
         }
       ]
     }
   ],
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000"
-    },
-    {
-      "key": "token",
-      "value": ""
-    },
-    {
-      "key": "userId",
-      "value": "ID_DEL_USUARIO_AQUI"
-    }
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "adminToken", "value": "" },
+    { "key": "providerToken", "value": "" },
+    { "key": "clientToken", "value": "" },
+    { "key": "adminId", "value": "" },
+    { "key": "providerId", "value": "" },
+    { "key": "clientId", "value": "" },
+    { "key": "qaCreatedUserId", "value": "" },
+    { "key": "adminCategoryId", "value": "" },
+    { "key": "adminSubCategoryParentId", "value": "" },
+    { "key": "adminSubcategoryId", "value": "" },
+    { "key": "adminProductCategoryId", "value": "" },
+    { "key": "adminProductSubcategoryId", "value": "" },
+    { "key": "adminProductId", "value": "" },
+    { "key": "adminProductSlug", "value": "" },
+    { "key": "providerCategoryId", "value": "" },
+    { "key": "providerSubParentCategoryId", "value": "" },
+    { "key": "providerSubcategoryId", "value": "" },
+    { "key": "providerProductCategoryId", "value": "" },
+    { "key": "providerProductSubcategoryId", "value": "" },
+    { "key": "providerProductId", "value": "" },
+    { "key": "providerProductSlug", "value": "" },
+    { "key": "clientRefCategoryId", "value": "" },
+    { "key": "clientRefSubcategoryId", "value": "" },
+    { "key": "clientRefProductId", "value": "" }
   ]
 }

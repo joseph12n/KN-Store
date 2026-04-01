@@ -9,6 +9,7 @@
 
 const express = require('express');
 const dotenv = require('dotenv');
+const cors = require('cors');
 const connectDB = require('./config/db');
 
 // ==================== CONFIGURACIÓN ====================
@@ -18,6 +19,24 @@ const app = express();
 
 // Conectar a la base de datos
 connectDB();
+
+// Middleware CORS para permitir solicitudes desde el frontend
+const corsOptions = {
+  origin: function (origin, callback) {
+    const isLocalhostOrigin = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
+
+    if (!origin || isLocalhostOrigin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
 
 // Middleware global para parsear JSON en el body de las peticiones
 app.use(express.json());

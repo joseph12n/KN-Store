@@ -79,7 +79,7 @@ const getSubcategoryById = async (req, res) => {
 /**
  * Crea una nueva subcategoría vinculada a una categoría padre.
  * @route POST /api/subcategories
- * @access Privado (Admin / Provider)
+ * @access Privado (Admin / Manager)
  */
 const createSubcategory = async (req, res) => {
   try {
@@ -111,7 +111,7 @@ const createSubcategory = async (req, res) => {
 /**
  * Actualiza parcialmente una subcategoría.
  * @route PUT /api/subcategories/:id
- * @access Privado (Admin / Provider)
+ * @access Privado (Admin / Manager)
  */
 const updateSubcategory = async (req, res) => {
   try {

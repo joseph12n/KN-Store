@@ -31,13 +31,13 @@ router.route('/:id')
   .get(getCategoryById);
 
 // ==================== RUTAS DE ADMINISTRACIÓN ====================
-// (Provider + Admin pueden crear y editar, Solo Admin puede borrar)
+// (Manager + Admin pueden crear y editar, Solo Admin puede borrar)
 
 router.route('/')
-  .post(protect, authorizeRoles('Admin', 'Provider'), validateCreateCategory, createCategory);
+  .post(protect, authorizeRoles('Admin', 'Manager'), validateCreateCategory, createCategory);
 
 router.route('/:id')
-  .put(protect, authorizeRoles('Admin', 'Provider'), updateCategory)
+  .put(protect, authorizeRoles('Admin', 'Manager'), updateCategory)
   .delete(protect, authorizeRoles('Admin'), deleteCategory);
 
 // ==================== EXPORTACIÓN ====================

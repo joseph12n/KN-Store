@@ -65,14 +65,14 @@ All responses use the structure:
 ```
 
 ### Role-Based Access Control
-Three roles: `Admin`, `Provider`, `Client` (default on register).
+Three roles: `Admin`, `Manager`, `Client` (default on register).
 - `protect()` — verifies JWT from `Authorization: Bearer <token>` header
 - `authorizeRoles(...roles)` — restricts to specific roles
 
 ### Data Model Hierarchy
 ```
 Category → Subcategory → Product
-                           └── Provider (User with Provider role)
+                           └── Manager (User with Manager role)
 ```
 
 Products support variants (size/color/SKU), discounts (percentage or fixed amount with date ranges), soft delete (`active` flag), and auto-generated slugs.

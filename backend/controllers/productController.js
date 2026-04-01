@@ -178,7 +178,7 @@ const getProductsByTag = (req, res) => getProductsByProperty({ tags: req.params.
 /**
  * Registra y almacena un nuevo producto.
  * @route POST /api/products
- * @access Privado (Admin / Provider)
+ * @access Privado (Admin / Manager)
  */
 const createProduct = async (req, res) => {
   try {
@@ -235,7 +235,7 @@ const createProduct = async (req, res) => {
 /**
  * Parchea o modifica los detalles de un producto.
  * @route PUT /api/products/:id
- * @access Privado (Admin / Provider)
+ * @access Privado (Admin / Manager)
  */
 const updateProduct = async (req, res) => {
   try {

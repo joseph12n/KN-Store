@@ -12,6 +12,15 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 
+const normalizeRole = (role) => (role === 'Provider' ? 'Manager' : role);
+
+const normalizeUserRole = (userDoc) => {
+  if (!userDoc) return userDoc;
+  const plainUser = userDoc.toObject ? userDoc.toObject() : { ...userDoc };
+  plainUser.role = normalizeRole(plainUser.role);
+  return plainUser;
+};
+
 // ==================== RUTAS PÚBLICAS ====================
 
 /**
@@ -44,7 +53,7 @@ const loginUser = async (req, res) => {
         name: user.name,
         last_name: user.last_name,
         email: user.email,
-        role: user.role,
+        role: normalizeRole(user.role),
         token: generateToken(user._id),
       },
       message: 'Autenticación exitosa',
@@ -106,7 +115,7 @@ const registerClient = async (req, res) => {
           name: user.name,
           last_name: user.last_name,
           email: user.email,
-          role: user.role,
+          role: normalizeRole(user.role),
           token: generateToken(user._id),
         },
         message: 'Usuario registrado exitosamente',
@@ -134,7 +143,7 @@ const getUserProfile = async (req, res) => {
     if (user) {
       res.json({
         success: true,
-        data: user,
+        data: normalizeUserRole(user),
       });
     } else {
       res.status(404).json({ success: false, message: 'Usuario no encontrado' });
@@ -179,7 +188,7 @@ const getUserById = async (req, res) => {
     if (user) {
       res.json({
         success: true,
-        data: user,
+        data: normalizeUserRole(user),
       });
     } else {
       res.status(404).json({ success: false, message: 'Usuario no encontrado' });
@@ -203,7 +212,7 @@ const getUsers = async (req, res) => {
     const users = await User.find({});
     res.json({
       success: true,
-      data: users,
+      data: users.map(normalizeUserRole),
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error en el servidor', error: error.message });
@@ -230,13 +239,13 @@ const createUser = async (req, res) => {
       last_name,
       email,
       password,
-      role: role || 'Client', // Por si no se envía rol
+      role: normalizeRole(role) || 'Client', // Por si no se envía rol
     });
 
     if (user) {
       res.status(201).json({
         success: true,
-        data: user, // Retornamos sin token, es creación administrativa
+        data: normalizeUserRole(user), // Retornamos sin token, es creación administrativa
         message: 'Usuario creado exitosamente',
       });
     } else {
@@ -260,7 +269,7 @@ const updateUser = async (req, res) => {
       user.name = req.body.name || user.name;
       user.last_name = req.body.last_name !== undefined ? req.body.last_name : user.last_name;
       user.email = req.body.email || user.email;
-      user.role = req.body.role || user.role;
+      user.role = normalizeRole(req.body.role) || user.role;
 
       // Actualizar la contraseña solo si se envía una nueva
       if (req.body.password) {
@@ -271,7 +280,7 @@ const updateUser = async (req, res) => {
 
       res.json({
         success: true,
-        data: updatedUser,
+        data: normalizeUserRole(updatedUser),
         message: 'Usuario actualizado exitosamente',
       });
     } else {

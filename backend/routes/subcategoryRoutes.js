@@ -35,10 +35,10 @@ router.route('/:id')
 // ==================== RUTAS DE ADMINISTRACIÓN ====================
 
 router.route('/')
-  .post(protect, authorizeRoles('Admin', 'Provider'), validateCreateSubcategory, createSubcategory);
+  .post(protect, authorizeRoles('Admin', 'Manager'), validateCreateSubcategory, createSubcategory);
 
 router.route('/:id')
-  .put(protect, authorizeRoles('Admin', 'Provider'), validateUpdateSubcategory, updateSubcategory)
+  .put(protect, authorizeRoles('Admin', 'Manager'), validateUpdateSubcategory, updateSubcategory)
   .delete(protect, authorizeRoles('Admin'), deleteSubcategory);
 
 // ==================== EXPORTACIÓN ====================
