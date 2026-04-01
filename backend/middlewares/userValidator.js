@@ -71,7 +71,7 @@ const validateCreateUser = (req, res, next) => {
     return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres' });
   }
 
-  const validRoles = ['Admin', 'Provider', 'Client'];
+  const validRoles = ['Admin', 'Manager', 'Client', 'Provider'];
   if (role && !validRoles.includes(role)) {
     return res.status(400).json({ success: false, message: `El rol '${role}' no es válido` });
   }
@@ -98,7 +98,7 @@ const validateUpdateUser = (req, res, next) => {
   }
 
   if (role) {
-    const validRoles = ['Admin', 'Provider', 'Client'];
+    const validRoles = ['Admin', 'Manager', 'Client', 'Provider'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ success: false, message: `El rol '${role}' no es válido` });
     }

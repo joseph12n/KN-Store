@@ -61,7 +61,7 @@ const getCategoryById = async (req, res) => {
 /**
  * Crear una nueva categoría.
  * @route POST /api/categories
- * @access Privado (Admin / Provider)
+ * @access Privado (Admin / Manager)
  */
 const createCategory = async (req, res) => {
   try {
@@ -92,7 +92,7 @@ const createCategory = async (req, res) => {
 /**
  * Actualizar una categoría existente por completo o de manera parcial.
  * @route PUT /api/categories/:id
- * @access Privado (Admin / Provider)
+ * @access Privado (Admin / Manager)
  */
 const updateCategory = async (req, res) => {
   try {

@@ -1,2 +1,9 @@
 #dependencias
 node_modules/
+CLAUDE.md
+
+# skills locales
+.github/skills/
+frontend/.claude/skills/
+**/SKILL.md
+**/SKILLS_INDEX.md

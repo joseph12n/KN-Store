@@ -7,6 +7,7 @@
     "seed:subcategories": "node seeds/seedSubcategories.js",
     "seed:products": "node seeds/seedProducts.js",
     "seed:all": "node seeds/seedAll.js",
+    "migrate:role:manager": "node scripts/migrateProviderToManagerRole.js",
     "test:users": "node tests/testUsersModule.js",
     "test:categories": "node tests/testCategoriesModule.js",
     "test:subcategories": "node tests/testSubcategoriesModule.js",

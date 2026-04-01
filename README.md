@@ -8,7 +8,7 @@ Un sistema integral de comercio electrónico desarrollado para modernizar y opti
 
 - **Catálogo Digital Interactivo:** Los clientes pueden explorar fácilmente el inventario de calzado, filtrando por color, talla, marca y referencia.
 - **Gestión Integral de Inventario:** Control en tiempo real de las existencias para evitar inconsistencias y pérdidas de información.
-- **Sistema de Roles y Seguridad:** Control de acceso estructurado para Administradores, Clientes y Proveedores, garantizando la protección de los datos.
+- **Sistema de Roles y Seguridad:** Control de acceso estructurado para Administradores, Managers y Clientes, garantizando la protección de los datos.
 - **Logística de Envíos:** Opciones de distribución flexibles que permiten a los clientes elegir entre pago contra entrega o paquetería convencional.
 - **Módulo de Servicios:** Administración y visualización clara de los servicios adicionales que ofrece la tienda.
 

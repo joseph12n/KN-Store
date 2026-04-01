@@ -1,7 +1,7 @@
 /**
  * Seed de Usuarios
  *
- * Purga e inserta la tabla de Usuarios (Admin, Provider y Client)
+ * Purga e inserta la tabla de Usuarios (Admin, Manager y Client)
  * para realizar simulaciones y pruebas locales de forma correcta.
  *
  * @module seeds/seedUsers
@@ -32,11 +32,11 @@ const importData = async () => {
         role: 'Admin',
       },
       {
-        name: 'Proveedor',
-        last_name: 'Externo',
-        email: 'proveedor@knstore.com',
+        name: 'Encargado',
+        last_name: 'Tienda',
+        email: 'manager@knstore.com',
         password: 'password123',
-        role: 'Provider',
+        role: 'Manager',
       },
       {
         name: 'Cliente',

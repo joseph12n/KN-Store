@@ -2,7 +2,7 @@
  * Modelo de Usuario
  *
  * Define el esquema de usuarios del sistema con los roles:
- * Admin, Provider y Client. Incluye encriptación automática
+ * Admin, Manager y Client. Incluye encriptación automática
  * de contraseña y verificación segura.
  *
  * Atributos del diagrama de clases:
@@ -58,7 +58,8 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: {
-        values: ['Admin', 'Provider', 'Client'],
+        // Se mantiene Provider temporalmente por compatibilidad con datos históricos.
+        values: ['Admin', 'Manager', 'Client', 'Provider'],
         message: '{VALUE} no es un rol válido',
       },
       default: 'Client',
@@ -82,6 +83,10 @@ const userSchema = new mongoose.Schema(
  * Solo se ejecuta si el campo password fue modificado o es nuevo.
  */
 userSchema.pre('save', async function () {
+  if (this.role === 'Provider') {
+    this.role = 'Manager';
+  }
+
   if (!this.isModified('password')) {
     return;
   }

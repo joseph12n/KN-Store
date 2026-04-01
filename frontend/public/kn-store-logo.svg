@@ -1,0 +1,23 @@
+<svg width="320" height="140" viewBox="0 0 320 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sole" x1="22" y1="64" x2="260" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0CF25D"/>
+      <stop offset="1" stop-color="#038C3E"/>
+    </linearGradient>
+    <linearGradient id="upper" x1="20" y1="24" x2="280" y2="82" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#034159"/>
+      <stop offset="1" stop-color="#025951"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="320" height="140" fill="transparent"/>
+
+  <path d="M26 66C58 59 78 45 92 30C98 24 111 22 120 26L163 44C176 50 190 53 204 53H248C270 53 288 66 292 86H42C34 86 28 81 26 74V66Z" fill="url(#upper)"/>
+  <path d="M24 86H294C292 92 288 97 282 100C274 104 262 107 248 107H58C40 107 28 99 24 86Z" fill="url(#sole)"/>
+
+  <path d="M97 48L119 40L151 52L129 59L97 48Z" fill="#011E2A" opacity="0.65"/>
+  <path d="M182 56H244" stroke="#011E2A" stroke-opacity="0.6" stroke-width="3" stroke-linecap="round"/>
+  <path d="M188 50H242" stroke="#011E2A" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round"/>
+
+  <text x="70" y="132" font-family="Sora, Segoe UI, sans-serif" font-size="44" font-weight="800" fill="#034159">KN_Store</text>
+</svg>

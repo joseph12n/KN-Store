@@ -29,7 +29,7 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
 
       // Decodificar y verificar el token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretKey_placeholder');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'asdola');
 
       // Buscar al usuario en la BD (excluyendo el password)
       req.user = await User.findById(decoded.id).select('-password');
@@ -61,7 +61,7 @@ const protect = async (req, res, next) => {
  * Comprueba si el rol del usuario autenticado (req.user) está en la lista de roles permitidos.
  * Debe ejecutarse DESPUÉS del middleware "protect".
  *
- * @param {...string} roles - Lista de roles permitidos (ej: 'Admin', 'Provider')
+ * @param {...string} roles - Lista de roles permitidos (ej: 'Admin', 'Manager')
  * @returns {Function} Middleware de Express
  */
 const authorizeRoles = (...roles) => {
@@ -71,11 +71,14 @@ const authorizeRoles = (...roles) => {
       return res.status(401).json({ success: false, message: 'No autorizado, autenticación requerida' });
     }
 
+    // Compatibilidad temporal: normalizar Provider legado a Manager.
+    const normalizedRole = req.user.role === 'Provider' ? 'Manager' : req.user.role;
+
     // Verificar si el rol del usuario está incluido en los permitidos
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(normalizedRole)) {
       return res.status(403).json({
         success: false,
-        message: `El rol '${req.user.role}' no tiene permiso para acceder a este recurso`
+        message: `El rol '${normalizedRole}' no tiene permiso para acceder a este recurso`
       });
     }
 

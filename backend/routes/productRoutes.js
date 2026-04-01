@@ -45,12 +45,12 @@ router.route('/:id')
 // ==================== RUTAS DE ADMINISTRACIÓN ====================
 
 router.route('/')
-  // Provider y Admin autorizados para subir catálogo base
-  .post(protect, authorizeRoles('Admin', 'Provider'), validateCreateProduct, createProduct);
+  // Manager y Admin autorizados para subir catálogo base
+  .post(protect, authorizeRoles('Admin', 'Manager'), validateCreateProduct, createProduct);
 
 router.route('/:id')
   // Modificación de catálogo
-  .put(protect, authorizeRoles('Admin', 'Provider'), validateUpdateProduct, updateProduct)
+  .put(protect, authorizeRoles('Admin', 'Manager'), validateUpdateProduct, updateProduct)
   // Únicamente administrador para erradicar temporal o permanentemente productos
   .delete(protect, authorizeRoles('Admin'), deleteProduct);
 
