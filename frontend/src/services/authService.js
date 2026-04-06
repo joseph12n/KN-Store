@@ -257,6 +257,24 @@ export const authService = {
     return parseResponse(response);
   },
 
+  requestPasswordReset: async (email) => {
+    const response = await fetch(`${API_BASE_URL}/users/password-reset-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return parseResponse(response);
+  },
+
+  resetPassword: async (token, password) => {
+    const response = await fetch(`${API_BASE_URL}/users/reset-password/${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    return parseResponse(response);
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

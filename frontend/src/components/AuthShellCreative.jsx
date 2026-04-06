@@ -1,7 +1,9 @@
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion as Motion, useReducedMotion } from 'framer-motion';
 import { KeyRound, UserPlus, AlertCircle, CheckCircle, ShieldCheck } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import { ForgotPassword } from './ForgotPassword';
+import { ResetPassword } from './ResetPassword';
 
 const initialRegisterState = { name: '', last_name: '', email: '', password: '' };
 
@@ -15,9 +17,20 @@ export const AuthShellCreative = () => {
   const reduceMotion = useReducedMotion();
   const { login, register, loading } = useContext(AuthContext);
   const [mode, setMode] = useState('login');
+  const [resetToken, setResetToken] = useState(null);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState(initialRegisterState);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
+
+  // Detectar token de reseteo en la URL al montar el componente
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('reset_token');
+    if (token) {
+      setResetToken(token);
+      setMode('reset');
+    }
+  }, []);
 
   const roleHints = useMemo(
     () => [
@@ -126,25 +139,27 @@ export const AuthShellCreative = () => {
           </p>
         </div>
 
-        {/* Mode switch */}
-        <div className="auth-shell__switch" role="tablist" aria-label="Modo de autenticación">
-          <button
-            type="button"
-            className={mode === 'login' ? 'is-active' : ''}
-            onClick={() => handleModeChange('login')}
-          >
-            <KeyRound size={12} className="auth-shell__switch-icon" />
-            Login
-          </button>
-          <button
-            type="button"
-            className={mode === 'register' ? 'is-active' : ''}
-            onClick={() => handleModeChange('register')}
-          >
-            <UserPlus size={12} className="auth-shell__switch-icon" />
-            Registro
-          </button>
-        </div>
+        {/* Mode switch — solo visible en login/register */}
+        {(mode === 'login' || mode === 'register') && (
+          <div className="auth-shell__switch" role="tablist" aria-label="Modo de autenticación">
+            <button
+              type="button"
+              className={mode === 'login' ? 'is-active' : ''}
+              onClick={() => handleModeChange('login')}
+            >
+              <KeyRound size={12} className="auth-shell__switch-icon" />
+              Login
+            </button>
+            <button
+              type="button"
+              className={mode === 'register' ? 'is-active' : ''}
+              onClick={() => handleModeChange('register')}
+            >
+              <UserPlus size={12} className="auth-shell__switch-icon" />
+              Registro
+            </button>
+          </div>
+        )}
 
         {/* Feedback */}
         {feedback.message && (
@@ -158,7 +173,7 @@ export const AuthShellCreative = () => {
 
         {/* Forms */}
         <AnimatePresence mode="wait">
-          {mode === 'login' ? (
+          {mode === 'login' && (
             <Motion.form
               key="login"
               onSubmit={handleLogin}
@@ -192,8 +207,31 @@ export const AuthShellCreative = () => {
               <button className="btn btn-primary btn-full auth-shell__submit" type="submit" disabled={loading}>
                 {loading ? 'Ingresando...' : 'Entrar al sistema'}
               </button>
+
+              {/* Enlace recuperación de contraseña */}
+              <button
+                id="forgot-password-link"
+                type="button"
+                onClick={() => handleModeChange('forgot')}
+                style={{
+                  marginTop: '10px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  color: 'var(--color-text-muted, #9ca3af)',
+                  textDecoration: 'underline',
+                  padding: 0,
+                  width: '100%',
+                  textAlign: 'center',
+                }}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
             </Motion.form>
-          ) : (
+          )}
+
+          {mode === 'register' && (
             <Motion.form
               key="register"
               onSubmit={handleRegister}
@@ -249,6 +287,21 @@ export const AuthShellCreative = () => {
                 {loading ? 'Creando cuenta...' : 'Crear cuenta'}
               </button>
             </Motion.form>
+          )}
+
+          {mode === 'forgot' && (
+            <ForgotPassword
+              key="forgot"
+              onBack={() => handleModeChange('login')}
+            />
+          )}
+
+          {mode === 'reset' && (
+            <ResetPassword
+              key="reset"
+              token={resetToken}
+              onBack={() => handleModeChange('login')}
+            />
           )}
         </AnimatePresence>
       </div>
