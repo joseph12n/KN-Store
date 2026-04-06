@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-KN-Store is a MERN stack e-commerce platform for a shoe store. The backend is fully implemented; the frontend is scaffolded but largely empty (components, pages, services, context, and hooks directories await development).
+KN-Store is a MERN stack e-commerce platform for a shoe store. The backend is fully implemented; the frontend has been migrated to Next.js App Router with public store, auth, profile, and admin routes already in place.
 
 ## Commands
 
@@ -31,10 +31,10 @@ npm run test:products
 ### Frontend (run from `/frontend`)
 ```bash
 npm install          # Install dependencies
-npm run dev          # Vite dev server (port 5173)
-npm run build        # Production build to /dist
+npm run dev          # Next.js dev server (port 5173)
+npm run build        # Production build to .next
 npm run lint         # ESLint
-npm run preview      # Preview production build
+npm run start        # Run the production build
 ```
 
 ## Environment Variables
