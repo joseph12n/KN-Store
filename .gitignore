@@ -1,6 +1,8 @@
 #dependencias
 node_modules/
 CLAUDE.md
+.claude/
+frontend/.next/
 
 # skills locales
 .github/skills/
