@@ -11,6 +11,8 @@
 
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const crypto = require('crypto');
+const { sendPasswordResetEmail } = require('../utils/emailService');
 
 const normalizeRole = (role) => (role === 'Provider' ? 'Manager' : role);
 
@@ -334,6 +336,124 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// ==================== RECUPERACIÓN DE CONTRASEÑA ====================
+
+/**
+ * Genera un token de recuperación y lo envía por correo.
+ * @route POST /api/users/password-reset-request
+ * @access Público
+ */
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'El correo electrónico es obligatorio' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No existe una cuenta con ese correo' });
+    }
+
+    // Generar token aleatorio criptográficamente seguro
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Guardar el token hasheado y su expiración (1 hora desde ahora)
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+    await user.save();
+
+    // Enviar correo con el token (el link apunta al frontend)
+    await sendPasswordResetEmail(user.email, resetToken);
+
+    res.status(200).json({
+      success: true,
+      message: 'Se envió un enlace de recuperación a tu correo electrónico',
+    });
+  } catch (error) {
+    console.error('Error en requestPasswordReset:', error.message);
+    res.status(500).json({ success: false, message: 'Error al enviar el correo', error: error.message });
+  }
+};
+
+/**
+ * Valida el token y actualiza la contraseña del usuario.
+ * @route POST /api/users/reset-password/:token
+ * @access Público
+ */
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+    // Buscar usuario con el token válido y no expirado
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'El enlace de recuperación no es válido o ha expirado',
+      });
+    }
+
+    // Actualizar contraseña y limpiar el token
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Contraseña actualizada exitosamente. Ya puedes iniciar sesión.',
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al restablecer la contraseña', error: error.message });
+  }
+};
+
+/**
+ * Verifica el correo electrónico del usuario usando un token.
+ * @route GET /api/users/verify-email/:token
+ * @access Público
+ */
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Por ahora el token de verificación se busca en resetPasswordToken
+    // (se puede extender con un campo dedicado emailVerifyToken si se requiere)
+    const user = await User.findOne({ resetPasswordToken: token });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'El enlace de verificación no es válido o ya fue utilizado',
+      });
+    }
+
+    user.isVerified = true;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Correo electrónico verificado exitosamente.',
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al verificar el correo', error: error.message });
+  }
+};
+
 // ==================== EXPORTACIÓN ====================
 
 module.exports = {
@@ -347,4 +467,7 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  requestPasswordReset,
+  resetPassword,
+  verifyEmail,
 };

@@ -70,6 +70,24 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // Verificación de correo electrónico
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Token temporal para recuperación de contraseña
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    // Fecha de expiración del token de recuperación
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true, // Agrega createdAt y updatedAt automáticamente

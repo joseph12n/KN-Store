@@ -23,6 +23,9 @@ const {
   createUser,
   updateUser,
   deleteUser,
+  requestPasswordReset,
+  resetPassword,
+  verifyEmail,
 } = require('../controllers/userController');
 
 // ==================== MIDDLEWARES ====================
@@ -37,6 +40,11 @@ const {
 // ==================== RUTAS PÚBLICAS ====================
 router.post('/login', validateLogin, loginUser);
 router.post('/register', validateRegister, registerClient);
+
+// --- Recuperación de contraseña y verificación de correo ---
+router.post('/password-reset-request', requestPasswordReset);
+router.post('/reset-password/:token', resetPassword);
+router.get('/verify-email/:token', verifyEmail);
 
 // ==================== RUTAS PRIVADAS (Requieren Autenticación) ====================
 
