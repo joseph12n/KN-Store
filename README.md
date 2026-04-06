@@ -18,10 +18,12 @@ Un sistema integral de comercio electrónico desarrollado para modernizar y opti
 
 Este proyecto está construido bajo el stack MERN para garantizar un rendimiento óptimo y escalabilidad:
 
-- **Frontend:** React.js
+- **Frontend:** Next.js (App Router) con React 19
 - **Backend:** Node.js, Express.js
 - **Base de Datos:** MongoDB
 - **Autenticación:** JSON Web Tokens (JWT)
+
+La interfaz del ecommerce ya fue migrada a Next.js para aprovechar renderizado en servidor, rutas por archivo, mejor SEO y una base más sólida para crecimiento futuro.
 
 ---
 
