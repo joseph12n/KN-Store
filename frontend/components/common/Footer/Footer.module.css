@@ -1,0 +1,320 @@
+/* ============================================================
+   Footer.module.css
+   Modulo de estilos para el Footer Corporativo de KN Store
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Variables locales
+   ------------------------------------------------------------ */
+
+.footer {
+  --ft-bg:          #1a1a1a;
+  --ft-text:        #f0f0f0;
+  --ft-muted:       #b0b0b0;
+  --ft-accent:      #0CF25D;
+  --ft-border:      rgba(255, 255, 255, 0.08);
+  --ft-link-hover:  #0CF25D;
+  --ft-icon-hover:  #0CF25D;
+  --ft-bottom-bg:   #111111;
+  --ft-transition:  160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ------------------------------------------------------------
+   .footer
+   Contenedor raiz. Fondo oscuro, tipografia base, borde superior
+   sutil que lo separa visualmente del main.
+   ------------------------------------------------------------ */
+
+.footer {
+  background-color: var(--ft-bg);
+  color: var(--ft-text);
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  font-size: 0.875rem;
+  border-top: 1px solid var(--ft-border);
+  width: 100%;
+}
+
+/* ------------------------------------------------------------
+   .container
+   Grilla de columnas para las 4 secciones de contenido.
+   Desktop: auto-fit con minimo de 250px.
+   ------------------------------------------------------------ */
+
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2.5rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2.5rem;
+}
+
+/* ------------------------------------------------------------
+   .section
+   Cada columna de contenido dentro del grid.
+   ------------------------------------------------------------ */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ------------------------------------------------------------
+   .sectionTitle
+   Titulo de cada seccion del footer (h3).
+   ------------------------------------------------------------ */
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ft-text);
+  margin-bottom: 0.25rem;
+}
+
+/* ------------------------------------------------------------
+   .contact / .contactLink
+   Bloque de informacion de contacto. Cada link con icono
+   alineado y efecto hover suave.
+   ------------------------------------------------------------ */
+
+.contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  font-style: normal;
+}
+
+.contactLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ft-muted);
+  text-decoration: none;
+  transition: color var(--ft-transition);
+  line-height: 1.4;
+}
+
+.contactLink:hover,
+.contactLink:focus-visible {
+  color: var(--ft-link-hover);
+  outline: none;
+}
+
+.contactLink:focus-visible {
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------
+   .navLinks / .navLink
+   Lista de enlaces internos de navegacion.
+   ------------------------------------------------------------ */
+
+.navLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navLink {
+  color: var(--ft-muted);
+  text-decoration: none;
+  transition: color var(--ft-transition), padding-left var(--ft-transition);
+  line-height: 1.5;
+}
+
+.navLink:hover,
+.navLink:focus-visible {
+  color: var(--ft-link-hover);
+  padding-left: 0.375rem;
+  outline: none;
+}
+
+.navLink:focus-visible {
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------
+   .paymentMethods / .paymentIcon / .paymentIconFallback
+   Fila de iconos de metodos de pago con efecto de elevacion
+   suave en hover.
+   ------------------------------------------------------------ */
+
+.paymentMethods {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.paymentIcon {
+  width: 48px;
+  height: 30px;
+  border-radius: 4px;
+  opacity: 0.85;
+  transition: opacity var(--ft-transition), transform var(--ft-transition);
+  flex-shrink: 0;
+}
+
+.paymentIcon:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.paymentIconFallback {
+  width: 30px;
+  height: 30px;
+  color: var(--ft-muted);
+  opacity: 0.7;
+  flex-shrink: 0;
+  transition: color var(--ft-transition), opacity var(--ft-transition);
+}
+
+.paymentIconFallback:hover {
+  color: var(--ft-text);
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------
+   .socialLinks / .socialLink
+   Fila de iconos de redes sociales. Boton circular con hover
+   de color acento.
+   ------------------------------------------------------------ */
+
+.socialLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.socialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ft-border);
+  color: var(--ft-muted);
+  text-decoration: none;
+  transition:
+    background-color var(--ft-transition),
+    color var(--ft-transition),
+    border-color var(--ft-transition),
+    transform var(--ft-transition);
+}
+
+.socialLink:hover,
+.socialLink:focus-visible {
+  background-color: rgba(12, 242, 93, 0.12);
+  border-color: rgba(12, 242, 93, 0.35);
+  color: var(--ft-icon-hover);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.socialLink:focus-visible {
+  box-shadow: 0 0 0 2px var(--ft-accent);
+}
+
+/* ------------------------------------------------------------
+   .bottom
+   Barra inferior: copyright y nota legal. Fondo mas oscuro y
+   separador visual.
+   ------------------------------------------------------------ */
+
+.bottom {
+  background-color: var(--ft-bottom-bg);
+  border-top: 1px solid var(--ft-border);
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+/* ------------------------------------------------------------
+   .copyright / .legalNote
+   Textos de la barra de copyright.
+   ------------------------------------------------------------ */
+
+.copyright {
+  font-size: 0.8rem;
+  color: var(--ft-muted);
+  margin: 0;
+}
+
+.legalNote {
+  font-size: 0.75rem;
+  color: rgba(176, 176, 176, 0.6);
+  margin: 0;
+}
+
+/* ------------------------------------------------------------
+   RESPONSIVO — Tablet (<= 768px)
+   Columnas mas angostas: minimo 150px.
+   ------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 2rem 1.25rem;
+    padding: 2rem 1.25rem 1.75rem;
+  }
+}
+
+/* ------------------------------------------------------------
+   RESPONSIVO — Movil (<= 480px)
+   Columna unica, cada seccion apilada verticalmente.
+   ------------------------------------------------------------ */
+
+@media (max-width: 480px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    padding: 1.75rem 1rem 1.5rem;
+  }
+
+  .bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 1rem;
+  }
+
+  .socialLinks {
+    gap: 0.4rem;
+  }
+
+  .paymentMethods {
+    gap: 0.4rem;
+  }
+}
+
+/* ------------------------------------------------------------
+   REDUCCION DE MOVIMIENTO
+   Desactiva transiciones para usuarios con preferencia de
+   movimiento reducido.
+   ------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .contactLink,
+  .navLink,
+  .paymentIcon,
+  .paymentIconFallback,
+  .socialLink {
+    transition: none;
+  }
+
+  .paymentIcon:hover,
+  .socialLink:hover,
+  .socialLink:focus-visible {
+    transform: none;
+  }
+}
+
