@@ -132,11 +132,27 @@ const productSchema = new mongoose.Schema(
 
     // ---- Imágenes y etiquetas ----
 
-    // URLs de las imágenes del producto
+    // Imágenes del producto con ángulo y descripción SEO
     images: [
       {
-        type: String,
-        default: 'https://via.placeholder.com/300?text=Producto',
+        url: {
+          type: String,
+          required: [true, 'La URL de la imagen es requerida'],
+          trim: true,
+        },
+        angle: {
+          type: String,
+          enum: {
+            values: ['front', 'side', 'back'],
+            message: 'El ángulo debe ser front, side o back',
+          },
+          default: 'front',
+        },
+        alt: {
+          type: String,
+          trim: true,
+          default: '',
+        },
       },
     ],
 

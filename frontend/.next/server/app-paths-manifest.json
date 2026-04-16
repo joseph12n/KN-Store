@@ -1,10 +1,14 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/admin/categories/page": "app/admin/categories/page.js",
-  "/admin/users/page": "app/admin/users/page.js",
-  "/page": "app/page.js",
-  "/admin/products/page": "app/admin/products/page.js",
-  "/profile/page": "app/profile/page.js",
   "/auth/page": "app/auth/page.js",
-  "/admin/subcategories/page": "app/admin/subcategories/page.js"
+  "/page": "app/page.js",
+  "/admin/users/page": "app/admin/users/page.js",
+  "/products/[id]/page": "app/products/[id]/page.js",
+  "/admin/products/page": "app/admin/products/page.js",
+  "/admin/subcategories/page": "app/admin/subcategories/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/faq/page": "app/faq/page.js",
+  "/politicas/page": "app/politicas/page.js",
+  "/terminos/page": "app/terminos/page.js"
 }
