@@ -8,6 +8,10 @@ export const metadata = {
   title: 'KN Store — Calzado con carácter',
   description: 'Tienda virtual de calzado KN Store. Explora el catálogo completo de zapatillas, botas y más.',
   keywords: ['calzado', 'zapatillas', 'tienda online', 'KN Store'],
+  icons: {
+    icon: '/kn-store-logo.svg',
+    shortcut: '/kn-store-logo.svg',
+  },
 };
 
 export default function RootLayout({ children }) {

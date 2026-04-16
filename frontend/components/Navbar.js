@@ -78,14 +78,9 @@ export default function Navbar() {
       <div className="kn-nav__brand">
         <img
           className="kn-nav__logo-img"
-          src="/kn-store-logo.png"
+          src="/kn-store-logo.svg"
           alt="KN Store"
           onError={(event) => {
-            if (!event.currentTarget.dataset.fallbackApplied) {
-              event.currentTarget.dataset.fallbackApplied = 'true';
-              event.currentTarget.src = '/kn-store-logo.svg';
-              return;
-            }
             event.currentTarget.style.display = 'none';
           }}
         />

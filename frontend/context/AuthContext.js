@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useCallback } from 'react';
+import React, { createContext, useState, useCallback, useEffect } from 'react';
 import { authService } from '@/services/authService';
 
 export const AuthContext = createContext();
@@ -14,9 +14,16 @@ const normalizeRoleUser = (user) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => normalizeRoleUser(authService.getUser()));
+  // Start as null on both server and client to avoid hydration mismatch.
+  // useEffect runs only on the client after hydration to restore the session.
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const stored = normalizeRoleUser(authService.getUser());
+    if (stored) setUser(stored);
+  }, []);
 
   const login = useCallback(async (email, password) => {
     setLoading(true);
