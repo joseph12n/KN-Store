@@ -1,1 +1,10 @@
-{}
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/products/page": "app/admin/products/page.js",
+  "/admin/subcategories/page": "app/admin/subcategories/page.js",
+  "/admin/categories/page": "app/admin/categories/page.js",
+  "/admin/users/page": "app/admin/users/page.js",
+  "/auth/page": "app/auth/page.js",
+  "/page": "app/page.js",
+  "/profile/page": "app/profile/page.js"
+}
