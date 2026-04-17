@@ -90,8 +90,10 @@ const sendPasswordResetEmail = async (to, token) => {
 const sendVerificationEmail = async (to, token) => {
   const transporter = createTransporter();
 
+  // El link apunta al endpoint del backend que verifica el token y redirige
+  const backendUrl = `http://localhost:${process.env.PORT || 3000}`;
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  const verifyLink = `${frontendUrl}?verify_token=${token}`;
+  const verifyLink = `${backendUrl}/api/users/verify-email/${token}`;
 
   const mailOptions = {
     from: process.env.EMAIL_FROM || 'KN-Store <no-reply@knstore.com>',

@@ -275,6 +275,16 @@ export const authService = {
     return parseResponse(response);
   },
 
+  // Verifica el correo usando el token recibido por email.
+  // Nota: normalmente el backend hace redirect directo; este método
+  // es útil si en el futuro se quiere manejar la verificación desde el frontend.
+  verifyEmailToken: async (token) => {
+    const response = await fetch(`${API_BASE_URL}/users/verify-email/${token}`, {
+      method: 'GET',
+    });
+    return parseResponse(response);
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

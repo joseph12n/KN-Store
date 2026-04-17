@@ -53,6 +53,7 @@ const AppContent = () => {
   const reduceMotion = useReducedMotion();
   const { user, logout } = useContext(AuthContext);
   const [tab, setTab] = useState('store');
+  const [verifiedBanner, setVerifiedBanner] = useState(null); // 'success' | 'error' | null
   const isClient = user?.role === 'Client';
   const isManager = user?.role === 'Manager';
   const isAdmin = user?.role === 'Admin';
@@ -88,6 +89,22 @@ const AppContent = () => {
       setTab('store');
     }
   }, [navItems, tab]);
+
+  // Detectar resultado de verificación de correo (redirect desde el backend)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const verified = params.get('verified');
+    if (verified === 'true') {
+      setVerifiedBanner('success');
+      // Limpiar el param de la URL sin recargar
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => setVerifiedBanner(null), 5000);
+    } else if (verified === 'false') {
+      setVerifiedBanner('error');
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => setVerifiedBanner(null), 5000);
+    }
+  }, []);
 
   return (
     <>
@@ -160,6 +177,38 @@ const AppContent = () => {
         </div>
       </Motion.nav>
 
+      {/* Banner de verificaci\u00f3n de correo */}
+      {verifiedBanner && (
+        <Motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          style={{
+            position: 'fixed',
+            top: '72px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 999,
+            background: verifiedBanner === 'success'
+              ? 'linear-gradient(135deg,#064e3b,#065f46)'
+              : 'linear-gradient(135deg,#7f1d1d,#991b1b)',
+            color: '#fff',
+            padding: '12px 24px',
+            borderRadius: '10px',
+            fontSize: '14px',
+            fontWeight: 500,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          {verifiedBanner === 'success'
+            ? '✅ Correo verificado exitosamente. ¡Ya puedes iniciar sesión!'
+            : '❌ El enlace de verificación no es válido o ya fue utilizado.'}
+        </Motion.div>
+      )}
+
       <main className="kn-main">
         <AnimatePresence mode="wait">
           <Motion.div
@@ -171,11 +220,15 @@ const AppContent = () => {
             transition={pageTransition}
           >
             {tab === 'store' && <PublicStoreHome />}
+            {/* Guard: auth solo si no hay sesión activa */}
             {tab === 'auth' && !user && <AuthShellCreative />}
+            {/* Guard: perfil solo si hay sesión */}
             {tab === 'profile' && user && <MyProfilePanel />}
+            {/* Guard: paneles de gestión solo para Manager o Admin */}
             {tab === 'categories' && (isManager || isAdmin) && <CategoriesCrudPanel />}
             {tab === 'subcategories' && (isManager || isAdmin) && <SubcategoriesCrudPanel />}
             {tab === 'products' && (isManager || isAdmin) && <ProductsCrudPanel />}
+            {/* Guard: panel de usuarios solo para Admin */}
             {tab === 'users' && isAdmin && <UsersCrudPanel />}
           </Motion.div>
         </AnimatePresence>
@@ -185,6 +238,7 @@ const AppContent = () => {
     </>
   );
 };
+
 
 function App() {
   return (

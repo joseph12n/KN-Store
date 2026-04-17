@@ -77,6 +77,12 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    // Token dedicado para verificación de correo (independiente del reset)
+    emailVerifyToken: {
+      type: String,
+      default: null,
+    },
+
     // Token temporal para recuperación de contraseña
     resetPasswordToken: {
       type: String,

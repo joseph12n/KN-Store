@@ -44,7 +44,26 @@ router.post('/register', validateRegister, registerClient);
 // --- Recuperación de contraseña y verificación de correo ---
 router.post('/password-reset-request', requestPasswordReset);
 router.post('/reset-password/:token', resetPassword);
-router.get('/verify-email/:token', verifyEmail);
+
+// Verificación de correo: redirige al frontend con el resultado
+router.get('/verify-email/:token', async (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  try {
+    await verifyEmail(req, {
+      status: (code) => ({
+        json: (body) => {
+          if (body.success) {
+            res.redirect(`${frontendUrl}?verified=true`);
+          } else {
+            res.redirect(`${frontendUrl}?verified=false&msg=${encodeURIComponent(body.message)}`);
+          }
+        },
+      }),
+    });
+  } catch {
+    res.redirect(`${frontendUrl}?verified=false`);
+  }
+});
 
 // ==================== RUTAS PRIVADAS (Requieren Autenticación) ====================
 

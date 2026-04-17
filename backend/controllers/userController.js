@@ -12,7 +12,7 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
-const { sendPasswordResetEmail } = require('../utils/emailService');
+const { sendPasswordResetEmail, sendVerificationEmail } = require('../utils/emailService');
 
 const normalizeRole = (role) => (role === 'Provider' ? 'Manager' : role);
 
@@ -110,6 +110,16 @@ const registerClient = async (req, res) => {
     });
 
     if (user) {
+      // Generar token de verificación de correo
+      const verifyToken = crypto.randomBytes(32).toString('hex');
+      user.emailVerifyToken = verifyToken;
+      await user.save();
+
+      // Enviar correo de verificación (fire-and-forget: no bloqueamos el registro si el correo falla)
+      sendVerificationEmail(user.email, verifyToken).catch((err) => {
+        console.error('Error enviando correo de verificación:', err.message);
+      });
+
       res.status(201).json({
         success: true,
         data: {
@@ -118,9 +128,10 @@ const registerClient = async (req, res) => {
           last_name: user.last_name,
           email: user.email,
           role: normalizeRole(user.role),
+          isVerified: user.isVerified,
           token: generateToken(user._id),
         },
-        message: 'Usuario registrado exitosamente',
+        message: 'Usuario registrado exitosamente. Revisa tu correo para verificar tu cuenta.',
       });
     } else {
       res.status(400).json({ success: false, message: 'Datos de usuario inválidos' });
@@ -429,9 +440,8 @@ const verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
 
-    // Por ahora el token de verificación se busca en resetPasswordToken
-    // (se puede extender con un campo dedicado emailVerifyToken si se requiere)
-    const user = await User.findOne({ resetPasswordToken: token });
+    // Buscar usuario por el campo dedicado de verificación de correo
+    const user = await User.findOne({ emailVerifyToken: token });
 
     if (!user) {
       return res.status(400).json({
@@ -440,14 +450,14 @@ const verifyEmail = async (req, res) => {
       });
     }
 
+    // Marcar como verificado y limpiar el token
     user.isVerified = true;
-    user.resetPasswordToken = null;
-    user.resetPasswordExpires = null;
+    user.emailVerifyToken = null;
     await user.save();
 
     res.status(200).json({
       success: true,
-      message: 'Correo electrónico verificado exitosamente.',
+      message: 'Correo electrónico verificado exitosamente. Ya puedes iniciar sesión.',
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error al verificar el correo', error: error.message });
